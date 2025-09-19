@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Review Report • CivicConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --bg1: #f0f4f8;
@@ -28,19 +29,18 @@
             height: 100%;
             margin: 0;
             font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
-            background:
-                radial-gradient(800px 300px at 10% 10%, rgba(6, 182, 212, 0.06), transparent),
-                linear-gradient(180deg, var(--bg1), var(--bg2));
+            background: radial-gradient(800px 300px at 10% 10%, rgba(6, 182, 212, 0.06), transparent), linear-gradient(180deg, var(--bg1), var(--bg2));
             color: #071023
         }
 
         .stage {
             width: 100vw;
-            height: 100vh;
+            min-height: calc(100vh - 64px);
             display: flex;
             align-items: stretch;
             justify-content: center;
-            padding: 24px
+            padding: 24px;
+            margin-top: 64px
         }
 
         .wrap {
@@ -245,15 +245,13 @@
 
 <body>
     {{> header}}
-
     <div class="stage">
         <div class="wrap">
             <section class="panel" aria-labelledby="reviewTitle">
                 <div class="header">
                     <div class="title">
                         <h1 id="reviewTitle">Review & Edit Report</h1>
-                        <p class="muted">Confirm image and add title, department and description before final submit.
-                        </p>
+                        <p class="muted">Confirm image and add title, department and description before final submit.</p>
                     </div>
                     <div class="meta-row">
                         <div class="muted">Image from previous step • Max 6MB</div>
@@ -272,8 +270,7 @@
                         <div class="col">
                             <label>Captured Photo</label>
                             <div class="drop" role="img" aria-label="Captured photo">
-                                <img id="reviewImage" class="preview-img" alt="Uploaded preview"
-                                    src="{{draft.imagePath}}">
+                                <img id="reviewImage" class="preview-img" alt="Uploaded preview" src="{{#if draft.imagePath}}{{draft.imagePath}}{{else}}/emblem.jpeg{{/if}}">
                             </div>
                         </div>
 
@@ -286,11 +283,12 @@
                                 <option value="water">Water Supply</option>
                                 <option value="others">Others</option>
                             </select>
+                            <div class="muted" style="margin-top:6px">Department will be auto-detected from your image</div>
                         </div>
 
                         <div class="col">
                             <label for="address">Address (exact)</label>
-                            <input id="address" name="address" type="text" required value="{{draft.address}}">
+                            <input id="address" name="address" type="text" required value="{{#if draft.address}}{{draft.address}}{{else}}123 Main Street{{/if}}">
                         </div>
 
                         <div class="col">
@@ -302,6 +300,16 @@
                                 <div style="width:160px">
                                     <div class="progress" aria-hidden="true"><i id="wcProgress"></i></div>
                                 </div>
+                            </div>
+                            <div class="actions" style="justify-content: flex-start; margin-top: 12px;">
+                                <button type="button" class="btn" id="generateDescriptionBtn">Generate Description</button>
+                                <div id="loadingIndicator" class="hidden" style="margin-left: 10px;">
+                                    <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                <div id="responseMessage" class="muted hidden" style="margin-left: 10px; color: var(--danger);"></div>
                             </div>
                         </div>
                     </div>
@@ -336,9 +344,6 @@
             </aside>
         </div>
     </div>
-
-    {{> footer}}
-
     <script>
         (function () {
             const desc = document.getElementById('description');
@@ -346,13 +351,21 @@
             const wcProgress = document.getElementById('wcProgress');
             const titleInput = document.getElementById('title');
             const submitBtn = document.getElementById('submitBtn');
+            const reviewImage = document.getElementById('reviewImage');
+            const generateDescriptionBtn = document.getElementById('generateDescriptionBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const responseMessage = document.getElementById('responseMessage');
 
-            function countWords(text) { if (!text) return 0; return text.trim().split(/\s+/).filter(Boolean).length; }
+            function countWords(text) {
+                if (!text) return 0;
+                return text.trim().split(/\s+/).filter(Boolean).length;
+            }
 
             function updateWordCount() {
                 const n = countWords(desc.value || '');
                 wc.textContent = 'Words: ' + n;
-                const min = 30, max = 250;
+                const min = 30,
+                    max = 250;
                 const pct = Math.max(0, Math.min(100, Math.round(((n - min) / (max - min)) * 100)));
                 wcProgress.style.width = pct + '%';
                 wcProgress.style.background = (n < min || n > max) ? 'linear-gradient(90deg,var(--danger),#ff7b7b)' : 'linear-gradient(90deg,var(--accent),var(--accent-2))';
@@ -363,7 +376,8 @@
 
             function titleWordCheck() {
                 const words = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
-                if (words > 10) titleInput.setCustomValidity('Title must be 1–10 words'); else titleInput.setCustomValidity('');
+                if (words > 10) titleInput.setCustomValidity('Title must be 1–10 words');
+                else titleInput.setCustomValidity('');
             }
             titleInput.addEventListener('input', titleWordCheck);
             titleWordCheck();
@@ -371,26 +385,247 @@
             document.getElementById('reviewForm').addEventListener('submit', function (e) {
                 const titleWords = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
                 if (titleWords < 1 || titleWords > 10) {
-                    e.preventDefault(); alert('Title must be 1–10 words'); titleInput.focus(); return;
+                    e.preventDefault();
+                    alert('Title must be 1–10 words');
+                    titleInput.focus();
+                    return;
                 }
                 const dCount = countWords(desc.value || '');
                 if (dCount < 30 || dCount > 250) {
-                    e.preventDefault(); alert('Description must be 30–250 words. Current: ' + dCount); desc.focus(); return;
+                    e.preventDefault();
+                    alert('Description must be 30–250 words. Current: ' + dCount);
+                    desc.focus();
+                    return;
                 }
                 const addr = document.getElementById('address');
-                if (!addr.value || !addr.value.trim()){ e.preventDefault(); showNotification('Address is required', 'error'); addr.focus(); return; }
-                submitBtn.disabled = true; submitBtn.textContent = 'Submitting…';
+                if (!addr.value || !addr.value.trim()) {
+                    e.preventDefault();
+                    showNotification('Address is required', 'error');
+                    addr.focus();
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting…';
             });
 
-            // prefill department if server provided (optional)
-            (function prefill() {
+            // --- AI INTEGRATION SCRIPT WITH DEPARTMENT DETECTION ---
+            const API_KEY = "AIzaSyADmHmFlpdMN_MgbA2bfGekjf1DQz8Mm9A";
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+            function showResponse(message, isError = false) {
+                responseMessage.textContent = message;
+                responseMessage.classList.remove('hidden');
+                responseMessage.style.color = isError ? 'var(--danger)' : 'var(--muted)';
+            }
+
+            function hideResponse() {
+                responseMessage.classList.add('hidden');
+            }
+
+            // Function to detect department from image
+            async function detectDepartmentFromImage() {
+                const imageUrl = reviewImage.src;
+                if (!imageUrl || imageUrl === window.location.origin + '/emblem.jpeg') {
+                    return null;
+                }
+
+                let base64Image = null;
                 try {
-                    const dept = "{{draft.department}}";
-                    if (dept) document.getElementById('department').value = dept;
-                } catch (e) { }
-            })();
+                    if (imageUrl.startsWith('data:image/')) {
+                        base64Image = imageUrl.split(',')[1];
+                    } else {
+                        const response = await fetch(imageUrl);
+                        const blob = await response.blob();
+                        base64Image = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error converting image to base64 for department detection:', error);
+                    return null;
+                }
+
+                const departmentPrompt = `Analyze this image for civic issues and determine which department should handle it. Return ONLY one of these exact department codes: "sanitation", "roads", "electricity", "water", or "others". 
+
+Guidelines:
+- "sanitation": waste, garbage, litter, dirty areas, sanitation issues
+- "roads": potholes, road damage, traffic signs, street infrastructure, sidewalks
+- "electricity": power lines, street lights, electrical equipment, power outages
+- "water": water leaks, drainage issues, flooding, water supply problems
+- "others": anything that doesn't fit the above categories
+
+Return only the department code, nothing else.`;
+
+                try {
+                    const payload = {
+                        contents: [{
+                            role: "user",
+                            parts: [{
+                                text: departmentPrompt
+                            }, {
+                                inlineData: {
+                                    mimeType: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }]
+                        }],
+                        generationConfig: {
+                            responseMimeType: "text/plain"
+                        }
+                    };
+
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const detectedDept = candidate.content.parts[0].text.trim().toLowerCase();
+                        const validDepartments = ['sanitation', 'roads', 'electricity', 'water', 'others'];
+                        
+                        if (validDepartments.includes(detectedDept)) {
+                            return detectedDept;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error detecting department:', error);
+                }
+                return null;
+            }
+
+            // Auto-detect department when page loads
+            async function autoDetectDepartment() {
+                const detectedDept = await detectDepartmentFromImage();
+                if (detectedDept) {
+                    document.getElementById('department').value = detectedDept;
+                    showResponse(`Department auto-detected: ${detectedDept}`, false);
+                    setTimeout(() => hideResponse(), 3000);
+                }
+            }
+
+            // Run department detection when page loads
+            autoDetectDepartment();
+
+            generateDescriptionBtn.addEventListener('click', async () => {
+                const imageUrl = reviewImage.src;
+                if (!imageUrl || imageUrl === window.location.origin + '/emblem.jpeg') {
+                    showResponse('No image available to analyze. Please upload a photo first.', true);
+                    return;
+                }
+
+                let base64Image = null;
+                try {
+                    if (imageUrl.startsWith('data:image/')) {
+                        base64Image = imageUrl.split(',')[1];
+                    } else {
+                        const response = await fetch(imageUrl);
+                        const blob = await response.blob();
+                        base64Image = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error converting image to base64:', error);
+                    showResponse('Failed to process image for analysis. Ensure the image is accessible.', true);
+                    return;
+                }
+
+                desc.value = '';
+                titleInput.value = '';
+                generateDescriptionBtn.disabled = true;
+                loadingIndicator.classList.remove('hidden');
+                hideResponse();
+
+                const prompt = `Analyze the image for any civic issues (e.g., waste, potholes, broken infrastructure, flooding, unmaintained public spaces). Provide a concise title (under 10 words) and a description (30-250 words) related to the civic issues depicted. Return the response as a JSON object with 'title' and 'description' keys. For example: { "title": "Pothole on Main Street", "description": "..." };`;
+
+                try {
+                    const payload = {
+                        contents: [{
+                            role: "user",
+                            parts: [{
+                                text: prompt
+                            }, {
+                                inlineData: {
+                                    mimeType: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }]
+                        }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    "title": {
+                                        "type": "STRING"
+                                    },
+                                    "description": {
+                                        "type": "STRING"
+                                    }
+                                },
+                                "propertyOrdering": ["title", "description"]
+                            }
+                        }
+                    };
+
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API call failed with status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const jsonString = candidate.content.parts[0].text;
+                        const data = JSON.parse(jsonString);
+
+                        titleInput.value = data.title || '';
+                        desc.value = data.description || '';
+                        updateWordCount();
+                        titleWordCheck();
+                        showResponse('Description generated successfully!', false);
+                    } else {
+                        throw new Error('Invalid API response structure from AI.');
+                    }
+
+                } catch (error) {
+                    console.error('Error generating content:', error);
+                    showResponse('An error occurred while generating the description. Please try again.', true);
+                } finally {
+                    generateDescriptionBtn.disabled = false;
+                    loadingIndicator.classList.add('hidden');
+                }
+            });
+
+            // Department is now auto-detected from image using AI
         })();
     </script>
+    {{> footer}}
 </body>
 
 </html>
