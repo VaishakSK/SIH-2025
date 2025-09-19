@@ -28,8 +28,18 @@
     .meta{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
     .badge{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#ecfeff,#bbf7d0);color:#064e3b;font-weight:800;font-size:13px}
     .actions{display:flex;gap:8px;align-items:center}
-    .btn{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;font-weight:800;text-decoration:none}
-    .btn-ghost{padding:8px 12px;border-radius:8px;border:1px solid rgba(7,16,35,0.06);background:transparent;color:#071023;text-decoration:none;font-weight:700}
+    .btn{position:relative;overflow:hidden; padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,#06b6d4,#0ea5a4);color:rgb(0, 0, 0);font-weight:900;text-decoration:none;box-shadow:0 10px 26px rgba(6,182,212,0.2);transition:transform .18s ease, box-shadow .18s ease, filter .18s ease}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(6,182,212,0.28)}
+    .btn:active{transform:translateY(0) scale(0.98);filter:saturate(110%)}
+    .btn-ghost{position:relative;overflow:hidden; padding:10px 14px;border-radius:10px;border:1px solid rgba(7,16,35,0.08);background:linear-gradient(180deg,#ffffff,#f8fafc);color:#071023;text-decoration:none;font-weight:800;transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
+    .btn-ghost:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(2,6,23,0.08);border-color:rgba(7,16,35,0.16)}
+    .btn-ghost:active{transform:translateY(0) scale(0.98)}
+    .btn-outline{position:relative;overflow:hidden; padding:10px 14px;border-radius:10px;border:1px solid #06b6d4;background:transparent;color:#06b6d4;font-weight:900;text-decoration:none;transition:transform .18s ease, box-shadow .18s ease, color .18s ease, border-color .18s ease}
+    .btn-outline:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(6,182,212,0.18);color:#0ea5a4;border-color:#0ea5a4}
+    .btn-outline:active{transform:translateY(0) scale(0.98)}
+    .ripple{position:absolute;border-radius:50%;transform:scale(0);animation:ripple .6s linear;background:rgba(255,255,255,0.5);pointer-events:none}
+    @keyframes ripple{to{transform:scale(4);opacity:0}}
+    .status-line{font-size:12px;color:var(--muted)}
     .empty{padding:40px;text-align:center;color:var(--muted);background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;box-shadow:var(--shadow)}
 
     /* global fixed back button (top-left) */
@@ -78,6 +88,7 @@
               {{else}}
                 <a class="btn-ghost" style="opacity:0.6;pointer-events:none">Edit</a>
               {{/if}}
+              <button type="button" class="btn-outline" onclick="trackStatus('{{this._id}}')">Track status</button>
               <form action="/reports/{{this._id}}/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this report?');">
                 <button type="submit" class="btn-ghost" style="background-color: #fee2e2; color: #b91c1c;">Delete</button>
               </form>
@@ -95,3 +106,38 @@
   {{> footer}}
 </body>
 </html>
+<script>
+  // ripple on buttons
+  function addRipple(e){
+    const target = e.currentTarget;
+    const circle = document.createElement('span');
+    const diameter = Math.max(target.clientWidth, target.clientHeight);
+    const rect = target.getBoundingClientRect();
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${e.clientX - rect.left - diameter/2}px`;
+    circle.style.top = `${e.clientY - rect.top - diameter/2}px`;
+    circle.classList.add('ripple');
+    const old = target.getElementsByClassName('ripple')[0];
+    if (old) old.remove();
+    target.appendChild(circle);
+  }
+  document.addEventListener('click', function(e){
+    const el = e.target.closest('.btn, .btn-ghost, .btn-outline');
+    if (el) addRipple(e);
+  });
+
+  async function trackStatus(id){
+    try{
+      const res = await fetch(`/reports/${id}/status`, { headers: { 'Accept': 'application/json' } });
+      const data = await res.json();
+      if(!data.success){
+        showNotification(data.message || 'Could not fetch status', 'error');
+        return;
+      }
+      const message = `Status: ${data.status}\nUpdated: ${data.updatedAtFormatted} (${data.updatedAgo})`;
+      showDialog('Report status', message, { buttons: [ { text: 'Close', onClick: () => {} } ] });
+    }catch(e){
+      showNotification('Error fetching status', 'error');
+    }
+  }
+</script>

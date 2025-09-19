@@ -21,6 +21,7 @@ const googleRoutes = require('./routes/AuthRoutes/google'); // new
 const logoutRoutes = require('./routes/AuthRoutes/logout'); // added
 const dashboardRoutes = require('./routes/Dashboard/dashboard');
 const settingsRoutes = require('./routes/Settings/settings');
+const contributeRoutes = require('./routes/Contribute/contribute');
 
 const app = express();
 
@@ -105,6 +106,7 @@ app.use('/auth', googleRoutes); // new
 app.use('/auth', logoutRoutes); // added
 app.use('/', dashboardRoutes);
 app.use('/', settingsRoutes);
+app.use('/', contributeRoutes);
 
 // Add redirect so /login works
 app.get('/login', (req, res) => {

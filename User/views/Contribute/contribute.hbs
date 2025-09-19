@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Contribute - CivicConnect</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --accent: #06b6d4;
+      --accent-2: #0ea5a4;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --muted: #64748b;
+      --text: #0f172a;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+    /* Header */
+    .header { margin-bottom: 32px; }
+    .header h1 { font-size: 2.5rem; font-weight: 800; margin: 0 0 8px 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { color: var(--muted); font-size: 1.1rem; margin: 0; }
+
+    /* Filters */
+    .filters { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end; }
+    .filter-group { display: flex; flex-direction: column; gap: 8px; }
+    .filter-group label { font-weight: 600; color: var(--text); font-size: 14px; }
+    .filter-group input, .filter-group select { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; }
+    .filter-group input:focus, .filter-group select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1); }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; box-shadow: var(--shadow); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+
+    /* Cards Grid */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; }
+    .card { background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); transition: all 0.3s; }
+    .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
+    .card-image { height: 200px; overflow: hidden; position: relative; }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    .card:hover .card-image img { transform: scale(1.05); }
+    .card-content { padding: 20px; }
+    .card-title { font-size: 1.25rem; font-weight: 700; margin: 0 0 8px 0; color: var(--text); }
+    .card-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--muted); }
+    .card-description { color: var(--muted); margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-info { background: #dbeafe; color: #1e3a8a; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-state i { font-size: 4rem; margin-bottom: 16px; color: var(--border); }
+    .empty-state h3 { font-size: 1.5rem; margin: 0 0 8px 0; color: var(--text); }
+    .empty-state p { margin: 0; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .header h1 { font-size: 2rem; }
+      .filters-grid { grid-template-columns: 1fr; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .card-actions { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-hands-helping"></i> Contribute to Community</h1>
+      <p>Help solve civic issues in your community by contributing solutions and insights</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <form method="GET" action="/contribute" id="filterForm">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label for="search"><i class="fas fa-search"></i> Search</label>
+            <input type="text" id="search" name="search" placeholder="Search issues..." value="{{filters.search}}">
+          </div>
+          <div class="filter-group">
+            <label for="department"><i class="fas fa-building"></i> Department</label>
+            <select id="department" name="department">
+              <option value="all">All Departments</option>
+              {{#each departments}}
+                <option value="{{this}}" {{#if (eq this ../filters.department)}}selected{{/if}}>{{this}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="location"><i class="fas fa-map-marker-alt"></i> Location</label>
+            <input type="text" id="location" name="location" placeholder="Enter location..." value="{{filters.location}}">
+          </div>
+          <div class="filter-group">
+            <label for="status"><i class="fas fa-flag"></i> Status</label>
+            <select id="status" name="status">
+              <option value="all" {{#if (eq filters.status "all")}}selected{{/if}}>All Status</option>
+              <option value="open" {{#if (eq filters.status "open")}}selected{{/if}}>Open</option>
+              <option value="in_progress" {{#if (eq filters.status "in_progress")}}selected{{/if}}>In Progress</option>
+              <option value="resolved" {{#if (eq filters.status "resolved")}}selected{{/if}}>Resolved</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="sort"><i class="fas fa-sort"></i> Sort By</label>
+            <select id="sort" name="sort">
+              <option value="newest" {{#if (eq filters.sort "newest")}}selected{{/if}}>Newest First</option>
+              <option value="oldest" {{#if (eq filters.sort "oldest")}}selected{{/if}}>Oldest First</option>
+              <option value="department" {{#if (eq filters.sort "department")}}selected{{/if}}>Department</option>
+              <option value="location" {{#if (eq filters.sort "location")}}selected{{/if}}>Location</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-filter"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Results -->
+    {{#if reports.length}}
+      <div class="cards-grid">
+        {{#each reports}}
+          <div class="card">
+            <div class="card-image">
+              <img src="{{this.imagePath}}" alt="{{this.title}}">
+            </div>
+            <div class="card-content">
+              <h3 class="card-title">{{this.title}}</h3>
+              <div class="card-meta">
+                <span><i class="fas fa-building"></i> {{this.department}}</span>
+                <span><i class="fas fa-map-marker-alt"></i> {{this.address}}</span>
+                <span><i class="fas fa-calendar"></i> {{this.createdAtFormatted}}</span>
+                <span><i class="fas fa-user"></i> {{this.reporter}}</span>
+              </div>
+              <div class="card-description">{{this.description}}</div>
+              <div class="card-actions">
+                <span class="badge {{#if (eq this.status "open")}}badge-warning{{else if (eq this.status "in_progress")}}badge-info{{else if (eq this.status "resolved")}}badge-success{{else}}badge-danger{{/if}}">
+                  {{this.status}}
+                </span>
+                <a href="/contribute/{{this._id}}" class="btn btn-primary">
+                  <i class="fas fa-plus"></i> Contribute
+                </a>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <h3>No Issues Found</h3>
+        <p>Try adjusting your filters or search terms to find civic issues to contribute to.</p>
+      </div>
+    {{/if}}
+  </div>
+
+  {{> footer}}
+</body>
+</html>

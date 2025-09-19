@@ -5,6 +5,9 @@ const multer = require('multer');
 const router = express.Router();
 const Report = require('../../models/report');
 const User = require('../../models/user');
+const dayjs = require('dayjs');
+const relativeTime = require('dayjs/plugin/relativeTime');
+dayjs.extend(relativeTime);
 
 // uploads directory (served by app.js as /uploads)
 const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
@@ -318,11 +321,32 @@ router.get('/reports/:id', async (req, res) => {
 
     report.createdAtFormatted = new Date(report.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     report.updatedAtFormatted = new Date(report.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    report.updatedAgo = dayjs(report.updatedAt).fromNow();
 
     return res.render('Report/viewReport', { report });
   } catch (err) {
     console.error('Error fetching report:', err);
     return res.status(500).send('Error fetching report');
+  }
+});
+
+// Track status route (JSON)
+router.get('/reports/:id/status', async (req, res) => {
+  try {
+    const rpt = await Report.findById(req.params.id).select('status updatedAt createdAt').lean();
+    if (!rpt) return res.status(404).json({ success: false, message: 'Report not found' });
+    return res.json({
+      success: true,
+      status: rpt.status,
+      createdAt: rpt.createdAt,
+      updatedAt: rpt.updatedAt,
+      createdAtFormatted: new Date(rpt.createdAt).toLocaleString(),
+      updatedAtFormatted: new Date(rpt.updatedAt).toLocaleString(),
+      updatedAgo: dayjs(rpt.updatedAt).fromNow()
+    });
+  } catch (err) {
+    console.error('Status route error:', err);
+    return res.status(500).json({ success: false, message: 'Error fetching status' });
   }
 });
 
