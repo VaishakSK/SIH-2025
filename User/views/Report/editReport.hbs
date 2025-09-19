@@ -129,7 +129,7 @@
         const words = (desc.value||'').trim().split(/\s+/).filter(Boolean).length;
         if (words < 30 || words > 250){
           e.preventDefault();
-          alert('Description must be 30–250 words (current: ' + words + ')');
+          showNotification('Description must be 30–250 words (current: ' + words + ')', 'error');
           desc.focus();
           return;
         }

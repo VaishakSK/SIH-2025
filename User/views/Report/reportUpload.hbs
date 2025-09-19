@@ -234,7 +234,7 @@
     });
 
     document.getElementById('uploadForm').addEventListener('submit', function(e){
-      if (!photo.files[0]){ e.preventDefault(); alert('Please choose a photo'); return; }
+      if (!photo.files[0]){ e.preventDefault(); showNotification('Please choose a photo', 'error'); return; }
       // allow empty address here; user can fill in review step
     });
 

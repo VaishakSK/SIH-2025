@@ -20,12 +20,17 @@ const signupRoutes = require('./routes/AuthRoutes/signup');
 const googleRoutes = require('./routes/AuthRoutes/google'); // new
 const logoutRoutes = require('./routes/AuthRoutes/logout'); // added
 const dashboardRoutes = require('./routes/Dashboard/dashboard');
+const settingsRoutes = require('./routes/Settings/settings');
 
 const app = express();
 
 // Middlewar
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static("public"));
 
 // Session configuration
 app.use(session({
@@ -98,6 +103,7 @@ app.use('/auth', signupRoutes);
 app.use('/auth', googleRoutes); // new
 app.use('/auth', logoutRoutes); // added
 app.use('/', dashboardRoutes);
+app.use('/', settingsRoutes);
 
 // Add redirect so /login works
 app.get('/login', (req, res) => {
