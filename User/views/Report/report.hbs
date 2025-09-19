@@ -172,7 +172,7 @@
         const tWords = (t.value||'').trim().split(/\s+/).filter(Boolean).length;
         if (tWords < 1 || tWords > 10){ e.preventDefault(); alert('Title must be 1–10 words'); t.focus(); return; }
         const d = countWords(desc.value || '');
-        if (d < 30 || d > 250){ e.preventDefault(); alert('Description must be 30–250 words'); desc.focus(); return; }
+        if (d < 30 || d > 250){ e.preventDefault(); showNotification('Description must be 30–250 words', 'error'); desc.focus(); return; }
       });
     })();
   </script>

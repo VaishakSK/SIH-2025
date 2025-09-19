@@ -205,7 +205,7 @@
     });
 
     document.getElementById('cameraForm').addEventListener('submit', function(e){
-      if (!imageBase64.value){ e.preventDefault(); alert('Capture a photo before continuing'); return; }
+      if (!imageBase64.value){ e.preventDefault(); showNotification('Capture a photo before continuing', 'error'); return; }
       // address optional here
       doneBtn.disabled = true; doneBtn.textContent = 'Submitting…';
     });

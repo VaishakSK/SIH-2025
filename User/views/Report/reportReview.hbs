@@ -1,188 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Review Report • CivicConnect</title>
-  <style>
-    :root{
-      --bg1:#f0f4f8; --bg2:#eaf2f7;
-      --card:#ffffff; --muted:#616b7a;
-      --accent:#06b6d4; --accent-2:#0ea5a4;
-      --danger:#dc2626;
-      --radius:14px; --shadow: 0 12px 40px rgba(2,6,23,0.06);
-      --max-width:1400px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:
-      radial-gradient(800px 300px at 10% 10%, rgba(6,182,212,0.06), transparent),
-      linear-gradient(180deg,var(--bg1),var(--bg2));color:#071023}
-    .stage{width:100vw;height:100vh;display:flex;align-items:stretch;justify-content:center;padding:24px}
-    .wrap{width:100%;max-width:var(--max-width);height:100%;display:grid;grid-template-columns:1fr 420px;gap:24px}
-    @media (max-width:1100px){ .wrap{grid-template-columns:1fr} }
-    .panel{ background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow); padding:26px;display:flex;flex-direction:column;gap:18px;border:1px solid rgba(7,16,35,0.04);overflow:auto; }
-    .header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .title{display:flex;flex-direction:column}
-    .title h1{margin:0;font-size:20px;font-weight:800}
-    .title p{margin:4px 0 0 0;color:var(--muted);font-size:13px}
-    form{display:flex;flex-direction:column;gap:18px}
-    .fields{display:grid;grid-template-columns:1fr;gap:14px}
-    .col{display:flex;flex-direction:column;gap:8px}
-    label{font-weight:700;font-size:14px}
-    input[type="text"], select, textarea{ padding:12px;border-radius:10px;border:1px solid rgba(7,16,35,0.06);font-size:14px;background:linear-gradient(180deg, #fff, #fbfdfe);outline:none; }
-    textarea{min-height:160px;resize:vertical}
-    .muted{font-size:13px;color:var(--muted)}
-    .drop{height:380px;border-radius:12px;border:2px dashed rgba(7,16,35,0.06);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(255,255,255,0.6), transparent);position:relative;overflow:hidden;}
-    .preview-img{width:100%;height:100%;object-fit:cover;display:block}
-    .side{display:flex;flex-direction:column;gap:14px}
-    .card{background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;padding:14px;border:1px solid rgba(7,16,35,0.04)}
-    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(6,182,212,0.12)}
-    .btn-ghost{background:transparent;border:1px solid rgba(7,16,35,0.06);color:#071023;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
-    .meta-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
-    .wordcount{font-weight:700}
-    .progress{height:8px;background:#eef6f8;border-radius:999px;overflow:hidden}
-    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%}
-    .actions{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin-top:6px}
-    @media (max-width:760px){ .drop{height:260px} .wrap{padding:12px} .side{order:2} }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Review Report • CivicConnect</title>
+    <style>
+        :root {
+            --bg1: #f0f4f8;
+            --bg2: #eaf2f7;
+            --card: #ffffff;
+            --muted: #616b7a;
+            --accent: #06b6d4;
+            --accent-2: #0ea5a4;
+            --danger: #dc2626;
+            --radius: 14px;
+            --shadow: 0 12px 40px rgba(2, 6, 23, 0.06);
+            --max-width: 1400px;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+            background:
+                radial-gradient(800px 300px at 10% 10%, rgba(6, 182, 212, 0.06), transparent),
+                linear-gradient(180deg, var(--bg1), var(--bg2));
+            color: #071023
+        }
+
+        .stage {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 24px
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: var(--max-width);
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px
+        }
+
+        @media (max-width:1100px) {
+            .wrap {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            border: 1px solid rgba(7, 16, 35, 0.04);
+            overflow: auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px
+        }
+
+        .title {
+            display: flex;
+            flex-direction: column
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800
+        }
+
+        .title p {
+            margin: 4px 0 0 0;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 14px
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(7, 16, 35, 0.06);
+            font-size: 14px;
+            background: linear-gradient(180deg, #fff, #fbfdfe);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 160px;
+            resize: vertical
+        }
+
+        .muted {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .drop {
+            height: 380px;
+            border-radius: 12px;
+            border: 2px dashed rgba(7, 16, 35, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 200%%;
+            object-fit: cover;
+            display: block
+        }
+
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 14px
+        }
+
+        .card {
+            background: linear-gradient(180deg, #fff, #fbfdfe);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid rgba(7, 16, 35, 0.04)
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            color: rgb(0, 0, 0);
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.12)
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(7, 16, 35, 0.06);
+            color: #071023;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center
+        }
+
+        .wordcount {
+            font-weight: 700
+        }
+
+        .progress {
+            height: 8px;
+            background: #eef6f8;
+            border-radius: 999px;
+            overflow: hidden
+        }
+
+        .progress>i {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 6px
+        }
+
+        @media (max-width:760px) {
+            .drop {
+                height: 260px
+            }
+
+            .wrap {
+                padding: 12px
+            }
+
+            .side {
+                order: 2
+            }
+        }
+    </style>
 </head>
+
 <body>
-  {{> header}}
+    {{> header}}
 
-  <div class="stage">
-    <div class="wrap">
-      <section class="panel" aria-labelledby="reviewTitle">
-        <div class="header">
-          <div class="title">
-            <h1 id="reviewTitle">Review & Edit Report</h1>
-            <p class="muted">Confirm image and add title, department and description before final submit.</p>
-          </div>
-          <div class="meta-row">
-            <div class="muted">Image from previous step • Max 6MB</div>
-          </div>
-        </div>
-
-        <form id="reviewForm" method="POST" action="/report/upload-complete">
-          <div class="fields">
-            <div class="col">
-              <label for="title">Title (max 10 words)</label>
-              <input id="title" name="title" type="text" required placeholder="Short title e.g. Pothole at Main St & 3rd Ave">
-              <div class="muted" style="margin-top:6px">Keep it short — up to 10 words.</div>
-            </div>
-
-            <div class="col">
-              <label>Captured Photo</label>
-              <div class="drop" role="img" aria-label="Captured photo">
-                <img id="reviewImage" class="preview-img" alt="Uploaded preview" src="{{draft.imagePath}}">
-              </div>
-            </div>
-
-            <div class="col">
-              <label for="department">Concerned Department</label>
-              <select id="department" name="department" required>
-                <option value="sanitation">Sanitation</option>
-                <option value="roads">Roads & Infrastructure</option>
-                <option value="electricity">Electricity</option>
-                <option value="water">Water Supply</option>
-                <option value="others">Others</option>
-              </select>
-            </div>
-
-            <div class="col">
-              <label for="address">Address (exact)</label>
-              <input id="address" name="address" type="text" required value="{{draft.address}}">
-            </div>
-
-            <div class="col">
-              <label for="description">Description (30–250 words)</label>
-              <textarea id="description" name="description" required placeholder="Describe the issue in detail..."></textarea>
-              <div class="meta-row" style="margin-top:8px">
-                <div class="muted"><span id="wordCount">Words: 0</span></div>
-                <div style="width:160px">
-                  <div class="progress" aria-hidden="true"><i id="wcProgress"></i></div>
+    <div class="stage">
+        <div class="wrap">
+            <section class="panel" aria-labelledby="reviewTitle">
+                <div class="header">
+                    <div class="title">
+                        <h1 id="reviewTitle">Review & Edit Report</h1>
+                        <p class="muted">Confirm image and add title, department and description before final submit.
+                        </p>
+                    </div>
+                    <div class="meta-row">
+                        <div class="muted">Image from previous step • Max 6MB</div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="actions" aria-hidden="false">
-            <a class="btn-ghost" href="/report/upload">Change photo</a>
-            <button class="btn" type="submit" id="submitBtn">Submit Report</button>
-          </div>
-        </form>
-      </section>
+                <form id="reviewForm" method="POST" action="/report/upload-complete">
+                    <div class="fields">
+                        <div class="col">
+                            <label for="title">Title (max 10 words)</label>
+                            <input id="title" name="title" type="text" required
+                                placeholder="Short title e.g. Pothole at Main St & 3rd Ave">
+                            <div class="muted" style="margin-top:6px">Keep it short — up to 10 words.</div>
+                        </div>
 
-      <aside class="side">
-        <div class="card">
-          <h4 style="margin:0 0 8px 0">Submission Tips</h4>
-          <ul class="muted" style="margin:0 0 0 16px;padding:0;line-height:1.6">
-            <li>Capture the issue clearly, with surrounding context.</li>
-            <li>Provide exact address / landmark for faster action.</li>
-            <li>Describe what happened (30–250 words).</li>
-          </ul>
+                        <div class="col">
+                            <label>Captured Photo</label>
+                            <div class="drop" role="img" aria-label="Captured photo">
+                                <img id="reviewImage" class="preview-img" alt="Uploaded preview"
+                                    src="{{draft.imagePath}}">
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <label for="department">Concerned Department</label>
+                            <select id="department" name="department" required>
+                                <option value="sanitation">Sanitation</option>
+                                <option value="roads">Roads & Infrastructure</option>
+                                <option value="electricity">Electricity</option>
+                                <option value="water">Water Supply</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+
+                        <div class="col">
+                            <label for="address">Address (exact)</label>
+                            <input id="address" name="address" type="text" required value="{{draft.address}}">
+                        </div>
+
+                        <div class="col">
+                            <label for="description">Description (30–250 words)</label>
+                            <textarea id="description" name="description" required
+                                placeholder="Describe the issue in detail..."></textarea>
+                            <div class="meta-row" style="margin-top:8px">
+                                <div class="muted"><span id="wordCount">Words: 0</span></div>
+                                <div style="width:160px">
+                                    <div class="progress" aria-hidden="true"><i id="wcProgress"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions" aria-hidden="false">
+                        <a class="btn-ghost" href="/report/upload">Change photo</a>
+                        <button class="btn" type="submit" id="submitBtn">Submit Report</button>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="side">
+                <div class="card">
+                    <img src="/emblem.jpeg" alt="Emblem"
+                        style="width: 100%; height: auto; display: block; border-radius: 8px;">
+                </div>
+
+                <div class="card">
+                    <h4 style="margin:0 0 8px 0">Submission Tips</h4>
+                    <ul class="muted" style="margin:0 0 0 16px;padding:0;line-height:1.6">
+                        <li>Capture the issue clearly, with surrounding context.</li>
+                        <li>Provide exact address / landmark for faster action.</li>
+                        <li>Describe what happened (30–250 words).</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4 style="margin:0 0 8px 0">Status</h4>
+                    <p class="muted" id="statusInfo">After submission you will be redirected to the report page where
+                        you can edit further.</p>
+                </div>
+            </aside>
         </div>
-
-        <div class="card">
-          <h4 style="margin:0 0 8px 0">Status</h4>
-          <p class="muted" id="statusInfo">After submission you will be redirected to the report page where you can edit further.</p>
-        </div>
-      </aside>
     </div>
-  </div>
 
-  {{> footer}}
+    {{> footer}}
 
-  <script>
-    (function(){
-      const desc = document.getElementById('description');
-      const wc = document.getElementById('wordCount');
-      const wcProgress = document.getElementById('wcProgress');
-      const titleInput = document.getElementById('title');
-      const submitBtn = document.getElementById('submitBtn');
+    <script>
+        (function () {
+            const desc = document.getElementById('description');
+            const wc = document.getElementById('wordCount');
+            const wcProgress = document.getElementById('wcProgress');
+            const titleInput = document.getElementById('title');
+            const submitBtn = document.getElementById('submitBtn');
 
-      function countWords(text){ if (!text) return 0; return text.trim().split(/\s+/).filter(Boolean).length; }
+            function countWords(text) { if (!text) return 0; return text.trim().split(/\s+/).filter(Boolean).length; }
 
-      function updateWordCount(){
-        const n = countWords(desc.value || '');
-        wc.textContent = 'Words: ' + n;
-        const min = 30, max = 250;
-        const pct = Math.max(0, Math.min(100, Math.round(((n - min) / (max - min)) * 100)));
-        wcProgress.style.width = pct + '%';
-        wcProgress.style.background = (n < min || n > max) ? 'linear-gradient(90deg,var(--danger),#ff7b7b)' : 'linear-gradient(90deg,var(--accent),var(--accent-2))';
-      }
+            function updateWordCount() {
+                const n = countWords(desc.value || '');
+                wc.textContent = 'Words: ' + n;
+                const min = 30, max = 250;
+                const pct = Math.max(0, Math.min(100, Math.round(((n - min) / (max - min)) * 100)));
+                wcProgress.style.width = pct + '%';
+                wcProgress.style.background = (n < min || n > max) ? 'linear-gradient(90deg,var(--danger),#ff7b7b)' : 'linear-gradient(90deg,var(--accent),var(--accent-2))';
+            }
 
-      desc.addEventListener('input', updateWordCount);
-      updateWordCount();
+            desc.addEventListener('input', updateWordCount);
+            updateWordCount();
 
-      function titleWordCheck(){
-        const words = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
-        if (words > 10) titleInput.setCustomValidity('Title must be 1–10 words'); else titleInput.setCustomValidity('');
-      }
-      titleInput.addEventListener('input', titleWordCheck);
-      titleWordCheck();
+            function titleWordCheck() {
+                const words = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
+                if (words > 10) titleInput.setCustomValidity('Title must be 1–10 words'); else titleInput.setCustomValidity('');
+            }
+            titleInput.addEventListener('input', titleWordCheck);
+            titleWordCheck();
 
-      document.getElementById('reviewForm').addEventListener('submit', function(e){
-        const titleWords = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
-        if (titleWords < 1 || titleWords > 10){
-          e.preventDefault(); alert('Title must be 1–10 words'); titleInput.focus(); return;
-        }
-        const dCount = countWords(desc.value || '');
-        if (dCount < 30 || dCount > 250){
-          e.preventDefault(); alert('Description must be 30–250 words. Current: ' + dCount); desc.focus(); return;
-        }
-        const addr = document.getElementById('address');
-        if (!addr.value || !addr.value.trim()){ e.preventDefault(); alert('Address is required'); addr.focus(); return; }
-        submitBtn.disabled = true; submitBtn.textContent = 'Submitting…';
-      });
+            document.getElementById('reviewForm').addEventListener('submit', function (e) {
+                const titleWords = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
+                if (titleWords < 1 || titleWords > 10) {
+                    e.preventDefault(); alert('Title must be 1–10 words'); titleInput.focus(); return;
+                }
+                const dCount = countWords(desc.value || '');
+                if (dCount < 30 || dCount > 250) {
+                    e.preventDefault(); alert('Description must be 30–250 words. Current: ' + dCount); desc.focus(); return;
+                }
+                const addr = document.getElementById('address');
+                if (!addr.value || !addr.value.trim()){ e.preventDefault(); showNotification('Address is required', 'error'); addr.focus(); return; }
+                submitBtn.disabled = true; submitBtn.textContent = 'Submitting…';
+            });
 
-      // prefill department if server provided (optional)
-      (function prefill(){
-        try {
-          const dept = "{{draft.department}}";
-          if (dept) document.getElementById('department').value = dept;
-        } catch(e){}
-      })();
-    })();
-  </script>
+            // prefill department if server provided (optional)
+            (function prefill() {
+                try {
+                    const dept = "{{draft.department}}";
+                    if (dept) document.getElementById('department').value = dept;
+                } catch (e) { }
+            })();
+        })();
+    </script>
 </body>
+
 </html>

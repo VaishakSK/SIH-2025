@@ -1,0 +1,119 @@
+<style>
+  .notification-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+  .toast { display: flex; align-items: center; gap: 12px; padding: 14px 14px 10px 14px; border-radius: 12px; background: #fff; box-shadow: 0 8px 28px rgba(2,6,23,0.12); border: 1px solid #e5e7eb; width: 340px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); animation: slideIn 0.4s forwards; overflow: hidden }
+  @keyframes slideIn { to { transform: translateX(0); } }
+  .toast.success { border-left: 4px solid #22c55e; }
+  .toast.error { border-left: 4px solid #ef4444; }
+  .toast.info { border-left: 4px solid #3b82f6; }
+  .toast-icon { width: 20px; height: 20px; color: #0f172a }
+  .toast.success .toast-icon { color: #22c55e; }
+  .toast.error .toast-icon { color: #ef4444; }
+  .toast.info .toast-icon { color: #3b82f6; }
+  .toast-message { flex: 1; font-weight: 700; font-size: 14px; color:#0f172a }
+  .toast-close { cursor: pointer; background: transparent; border: none; color: #9ca3af; font-size:16px }
+  .toast-progress { position: relative; height: 3px; background: #e5e7eb; width: 100%; border-radius: 999px; margin-top: 8px }
+  .toast-progress > span { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 999px }
+  .toast.success .toast-progress > span { background:#86efac }
+  .toast.error .toast-progress > span { background:#fecaca }
+  .toast.info .toast-progress > span { background:#bfdbfe }
+
+  /* modal dialog */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(2,6,23,0.6); backdrop-filter: blur(3px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px }
+  .modal-overlay.active { display: flex }
+  .modal { width: 100%; max-width: 520px; background: #fff; border-radius: 14px; box-shadow: 0 24px 80px rgba(2,6,23,0.25); border: 1px solid #e5e7eb; overflow: hidden }
+  .modal-header { display:flex; align-items:center; justify-content: space-between; padding: 16px 18px; border-bottom:1px solid #e5e7eb }
+  .modal-title { font-weight: 800; color:#0f172a }
+  .modal-body { padding: 16px 18px; color:#0f172a }
+  .modal-actions { display:flex; justify-content: flex-end; gap: 10px; padding: 12px 18px; background:#f8fafc; border-top:1px solid #e5e7eb }
+  .btn { padding: 10px 14px; border-radius: 10px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-weight:800 }
+  .btn-primary { background: linear-gradient(90deg,#06b6d4,#0ea5a4); color:#fff; border:0 }
+  .btn-danger { background:#ef4444; color:#fff; border:0 }
+</style>
+
+<div id="notification-container" class="notification-container"></div>
+
+<div id="dialog-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-header">
+      <div id="dialog-title" class="modal-title">Notice</div>
+      <button id="dialog-close" class="toast-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="dialog-body" class="modal-body">Message</div>
+    <div id="dialog-actions" class="modal-actions"></div>
+  </div>
+  </div>
+
+<script>
+  function showNotification(message, type = 'info', duration = 4000) {
+    const container = document.getElementById('notification-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icons = {
+      success: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+      error: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+      info: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+    };
+
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type] || icons['info']}</div>
+      <div class="toast-message">${message}</div>
+      <button class="toast-close" aria-label="Close">&times;</button>
+      <div class="toast-progress"><span></span></div>
+    `;
+
+    container.appendChild(toast);
+
+    const closeButton = toast.querySelector('.toast-close');
+    const bar = toast.querySelector('.toast-progress > span');
+    let closed = false;
+
+    function removeToast(){ if (closed) return; closed = true; toast.remove(); }
+    closeButton.addEventListener('click', removeToast);
+
+    if (duration) {
+      // animate progress bar
+      requestAnimationFrame(() => {
+        bar.style.transition = `width ${duration}ms linear`;
+        bar.style.width = '100%';
+      });
+      setTimeout(removeToast, duration + 50);
+    }
+  }
+
+  function showDialog(title, message, options = {}) {
+    const overlay = document.getElementById('dialog-overlay');
+    const titleEl = document.getElementById('dialog-title');
+    const bodyEl = document.getElementById('dialog-body');
+    const actionsEl = document.getElementById('dialog-actions');
+    const closeBtn = document.getElementById('dialog-close');
+
+    titleEl.textContent = title || 'Notice';
+    bodyEl.textContent = message || '';
+    actionsEl.innerHTML = '';
+
+    const buttons = options.buttons || [
+      { text: 'OK', variant: 'primary', onClick: () => {} }
+    ];
+    buttons.forEach(btn => {
+      const b = document.createElement('button');
+      b.className = 'btn ' + (btn.variant === 'danger' ? 'btn-danger' : btn.variant === 'primary' ? 'btn-primary' : '');
+      b.textContent = btn.text || 'OK';
+      b.addEventListener('click', () => { try { btn.onClick && btn.onClick(); } finally { overlay.classList.remove('active'); overlay.setAttribute('aria-hidden','true'); } });
+      actionsEl.appendChild(b);
+    });
+
+    function close(){ overlay.classList.remove('active'); overlay.setAttribute('aria-hidden','true'); }
+    closeBtn.onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden','false');
+  }
+
+  // global helpers for convenience
+  window.showNotification = window.showNotification || showNotification;
+  window.showDialog = window.showDialog || showDialog;
+</script>

@@ -20,12 +20,18 @@ const signupRoutes = require('./routes/AuthRoutes/signup');
 const googleRoutes = require('./routes/AuthRoutes/google'); // new
 const logoutRoutes = require('./routes/AuthRoutes/logout'); // added
 const dashboardRoutes = require('./routes/Dashboard/dashboard');
+const settingsRoutes = require('./routes/Settings/settings');
+const contributeRoutes = require('./routes/Contribute/contribute');
 
 const app = express();
 
 // Middlewar
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static("public"));
 
 // Session configuration
 app.use(session({
@@ -76,7 +82,7 @@ app.use(async (req, res, next) => {
     res.locals.currentYear = new Date().getFullYear(); // provide year for footer
 
     if (req.session && req.session.userId) {
-      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId').lean();
+      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId avatarUrl').lean();
       if (user) {
         res.locals.currentUser = {
           id: user._id,
@@ -84,7 +90,8 @@ app.use(async (req, res, next) => {
           lastName: user.lastName || '',
           email: user.email || '',
           username: user.username || '',
-          googleId: user.googleId || null
+          googleId: user.googleId || null,
+          avatarUrl: user.avatarUrl || ''
         };
       }
     }
@@ -104,6 +111,8 @@ app.use('/auth', signupRoutes);
 app.use('/auth', googleRoutes); // new
 app.use('/auth', logoutRoutes); // added
 app.use('/', dashboardRoutes);
+app.use('/', settingsRoutes);
+app.use('/', contributeRoutes);
 
 // Add redirect so /login works
 app.get('/login', (req, res) => {

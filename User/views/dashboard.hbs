@@ -7,107 +7,106 @@
   <style>
     :root{
       --bg-1: #0f172a;
+      --bg-soft: #f5f7fb;
       --accent: #06b6d4;
       --accent-2:#0ea5a4;
-      --muted:#94a3b8;
+      --success:#16a34a;
+      --warning:#f59e0b;
+      --muted:#64748b;
       --radius:14px;
-      --shadow: 0 10px 30px rgba(2,6,23,0.12);
+      --ring: rgba(6,182,212,0.25);
+      --shadow: 0 12px 36px rgba(2,6,23,0.10);
+      --shadow-strong: 0 22px 60px rgba(2,6,23,0.12);
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Helvetica,Arial;background:
-      radial-gradient(1200px 400px at 10% 10%, rgba(6,182,212,0.04), transparent),
-      linear-gradient(180deg,#f5f7fb,#eef2f6);color:var(--bg-1)}
+      radial-gradient(1200px 400px at 10% 10%, rgba(6,182,212,0.05), transparent),
+      linear-gradient(180deg,#ffffff,#eef2f6);color:var(--bg-1)}
+
     /* Full-screen layout */
     .wrap{
-      width:100vw;
-      height:100vh;
-      display:flex;
-      align-items:stretch;
-      justify-content:center;
-      padding:20px;
-      gap:20px;
+      width:100vw;height:100vh;display:flex;align-items:stretch;justify-content:center;padding:20px;gap:20px;
     }
 
     /* Make content span full width while keeping comfortable inner margins */
     .grid-layout{
-      display:grid;
-      grid-template-columns:280px 1fr;
-      gap:22px;
-      align-items:start;
-      width:100%;
-      height:100%;
-      max-width:none;
+      display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start;width:100%;height:100%;max-width:none;
     }
 
     /* Sidebar fills full height of viewport area inside the wrap */
     .sidebar{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      padding:18px;
-      border-radius:var(--radius);
+      display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:var(--radius);
       background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.94));
-      box-shadow:var(--shadow);
-      border:1px solid rgba(15,23,42,0.03);
-      height:100%;
-      overflow:auto;
+      box-shadow:var(--shadow);border:1px solid rgba(15,23,42,0.05);height:100%;overflow:auto;
     }
 
     .profile{display:flex;gap:12px;align-items:center}
     .avatar{
-      width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#ecfeff,#dbeafe);
-      display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;font-size:22px;box-shadow:0 8px 20px rgba(6,182,212,0.06)
+      width:64px;height:64px;border-radius:12px;background:conic-gradient(from 180deg at 50% 50%, #ecfeff, #dbeafe, #ecfeff);
+      display:flex;align-items:center;justify-content:center;font-weight:900;color:#0f172a;font-size:22px;box-shadow:0 10px 24px rgba(6,182,212,0.10)
     }
-    .userMeta .name{font-weight:800;font-size:16px}
+    .avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+    .userMeta .name{font-weight:900;font-size:16px;letter-spacing:-0.01em}
     .userMeta .email{font-size:13px;color:var(--muted);margin-top:4px}
     .nav{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-    .nav a{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;color:var(--bg-1);text-decoration:none;font-weight:700}
-    .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 8px 22px rgba(14,165,164,0.12)}
-    .nav a:hover{background:#f1f9f8}
+    .nav a{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;color:var(--bg-1);text-decoration:none;font-weight:800;transition:background .2s ease, transform .2s ease, box-shadow .2s ease}
+    .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 10px 26px rgba(14,165,164,0.16)}
+    .nav a:hover{background:#eefcfb;transform:translateY(-2px)}
     .sidebar .small{font-size:13px;color:var(--muted);margin-top:auto}
 
     /* main area should fill height and scroll internally */
-    .main{
-      display:flex;
-      flex-direction:column;
-      gap:18px;
-      height:100%;
-      overflow:hidden;
-      border-radius:var(--radius);
-    }
+    .main{display:flex;flex-direction:column;gap:18px;height:100%;overflow:hidden;border-radius:var(--radius);}
     .mainInner{
-      display:flex;
-      flex-direction:column;
-      padding:18px;
-      background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);
-      box-shadow:var(--shadow);
-      border:1px solid rgba(15,23,42,0.03);
-      height:100%;
-      overflow:auto;
-      border-radius:var(--radius);
+      display:flex;flex-direction:column;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);
+      box-shadow:var(--shadow);border:1px solid rgba(15,23,42,0.05);height:100%;overflow:auto;border-radius:var(--radius);
     }
 
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;background:transparent;padding-bottom:8px;z-index:2}
-    .title h1{margin:0;font-size:20px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;background:linear-gradient(180deg,#ffffff,rgba(255,255,255,0.8));backdrop-filter:saturate(120%) blur(4px);padding-bottom:8px;z-index:2}
+    .title h1{margin:0;font-size:22px;letter-spacing:-0.01em}
     .sub{color:var(--muted);font-size:13px}
     .controls{display:flex;gap:10px;align-items:center}
-    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:800}
-    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 10px 30px rgba(6,182,212,0.12)}
-    .btn-ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:var(--bg-1)}
+
+    .search{padding:10px 12px;border-radius:12px;border:1px solid rgba(15,23,42,0.08);background:#fff;transition:box-shadow .2s ease,border-color .2s ease}
+    .search:focus{outline:none;border-color:#06b6d4;box-shadow:0 0 0 6px var(--ring)}
+
+    .btn{padding:10px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:900;letter-spacing:.01em;transition:transform .2s ease, box-shadow .2s ease, background .2s ease}
+    .btn:focus-visible{outline:none;box-shadow:0 0 0 6px var(--ring)}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 12px 32px rgba(6,182,212,0.18)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 42px rgba(6,182,212,0.22)}
+    .btn-ghost{background:linear-gradient(180deg,#ffffff,#f8fafc);border:1px solid rgba(15,23,42,0.08);color:var(--bg-1)}
+    .btn-ghost:hover{background:#ffffff}
 
     /* stats - responsive */
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:6px}
-    .stat-card{border-radius:12px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.95),#fff);box-shadow: 0 12px 40px rgba(2,6,23,0.04);border:1px solid rgba(15,23,42,0.03)}
+    .stat-card{
+      border-radius:16px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);
+      box-shadow: 0 14px 44px rgba(2,6,23,0.06);border:1px solid rgba(15,23,42,0.06);position:relative;overflow:hidden
+    }
+    .stat-card::after{content:"";position:absolute;inset:auto -40% -60% -40%;height:140%;background:radial-gradient(closest-side, rgba(6,182,212,0.08), transparent 65%)}
     .stat-card .label{font-size:13px;color:var(--muted)}
-    .stat-card .value{font-size:26px;font-weight:900;margin-top:6px}
-    .panel{margin-top:6px;border-radius:12px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);box-shadow:0 12px 30px rgba(2,6,23,0.04);border:1px solid rgba(15,23,42,0.03)}
+    .stat-card .value{font-size:28px;font-weight:900;margin-top:6px;letter-spacing:-0.02em}
+    .pill{font-size:12px;color:var(--muted)}
+
+    .panel{margin-top:6px;border-radius:16px;padding:14px;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);box-shadow:0 14px 40px rgba(2,6,23,0.06);border:1px solid rgba(15,23,42,0.06)}
     .report-list{display:flex;flex-direction:column;gap:10px}
-    .report-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid rgba(15,23,42,0.03);background:linear-gradient(180deg,rgba(255,255,255,0.98),transparent)}
-    .report-item .meta .title{font-weight:800}
+    .report-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;border:1px solid rgba(15,23,42,0.06);background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);transition:transform .18s ease, box-shadow .18s ease, background .18s ease}
+    .report-item:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(2,6,23,0.08);background:#ffffff}
+    .report-item .meta .title{font-weight:900}
     .report-item .meta .sub{font-size:13px;color:var(--muted)}
-    .badge{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#ecfeff,#bbf7d0);color:#064e3b;font-weight:800}
+    .badge{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#ecfeff,#bbf7d0);color:#064e3b;font-weight:900}
     .empty{color:var(--muted);padding:18px;text-align:center}
-    .pill{font-size:13px;color:var(--muted)}
+
+    /* public issues */
+    .issues{display:flex;flex-direction:column;gap:10px}
+    .issue{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px;border-radius:12px;border:1px solid rgba(15,23,42,0.06);background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);transition:transform .18s ease, box-shadow .18s ease}
+    .issue:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(2,6,23,0.08)}
+    .issue .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .issue .title{font-weight:900}
+    .chip{padding:6px 10px;border-radius:999px;background:#eef2f6;color:#0f172a;font-weight:800;font-size:12px}
+    .chip.status-open{background:#fef3c7;color:#92400e}
+    .chip.status-in_progress{background:#dbeafe;color:#1e3a8a}
+    .chip.status-resolved{background:#dcfce7;color:#166534}
+    .muted-small{color:var(--muted);font-size:12px}
 
     @media (max-width:980px){
       .grid-layout{grid-template-columns:1fr}
@@ -129,7 +128,7 @@
     <div class="grid-layout">
       <aside class="sidebar" aria-label="Sidebar">
         <div class="profile">
-          <div class="avatar">{{#if username}}{{username.[0]}}{{else}}U{{/if}}</div>
+          <div class="avatar">{{#if avatarUrl}}<img src="{{avatarUrl}}" alt="Avatar">{{else}}{{#if username}}{{username.[0]}}{{else}}U{{/if}}{{/if}}</div>
           <div class="userMeta">
             <div class="name">{{firstName}}</div>
             <div class="email">{{email}}</div>
@@ -140,6 +139,7 @@
           <a href="/dashboard" class="active">Overview</a>
           <a href="/reports">My Reports</a>
           <a href="/report">Create Report</a>
+          <a href="/contribute">Contribute</a>
           <a href="/settings">Settings</a>
         </nav>
 
@@ -206,6 +206,33 @@
                   {{/each}}
                 {{else}}
                   <div class="empty">No recent reports yet. Click "Create Report" to file one.</div>
+                {{/if}}
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="panel" aria-live="polite">
+              <h3 style="margin:0 0 10px 0">Latest civic issues</h3>
+              <div class="issues">
+                {{#if recentPublic}}
+                  {{#each recentPublic}}
+                    <div class="issue">
+                      <div>
+                        <div class="row">
+                          <div class="title">{{this.title}}</div>
+                          <span class="chip status-{{this.status}}">{{this.status}}</span>
+                          <span class="chip">{{this.department}}</span>
+                        </div>
+                        <div class="muted-small">{{#if this.locationText}}{{this.locationText}}{{else}}{{this.address}}{{/if}} • {{this.createdAt}} • by {{this.reporter}}</div>
+                      </div>
+                      <div class="row">
+                        <a href="/reports/{{this._id}}" class="btn btn-ghost" style="text-decoration:none">View</a>
+                      </div>
+                    </div>
+                  {{/each}}
+                {{else}}
+                  <div class="empty">No civic issues found.</div>
                 {{/if}}
               </div>
             </div>
