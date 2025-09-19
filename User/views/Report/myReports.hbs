@@ -31,12 +31,30 @@
     .btn{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;font-weight:800;text-decoration:none}
     .btn-ghost{padding:8px 12px;border-radius:8px;border:1px solid rgba(7,16,35,0.06);background:transparent;color:#071023;text-decoration:none;font-weight:700}
     .empty{padding:40px;text-align:center;color:var(--muted);background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;box-shadow:var(--shadow)}
+
+    /* global fixed back button (top-left) */
+    .global-back{
+      position:fixed;
+      left:20px;
+      top:20px;
+      z-index:999;
+      box-shadow:0 6px 18px rgba(2,6,23,0.08);
+      background:transparent;
+    }
+    @media(max-width:520px){
+      .global-back{left:12px;top:12px;padding:8px 10px}
+    }
   </style>
 </head>
 <body>
+  {{> header}}
+
   <div class="stage">
     <div class="container">
       <h1 style="margin:0 0 14px 0">My Reports</h1>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+        <a href="/report" class="btn" style="text-decoration:none">Create Report</a>
+      </div>
       {{#if reports.length}}
       <div class="grid" aria-live="polite">
         {{#each reports}}
@@ -55,7 +73,14 @@
             <div class="muted" style="margin-top:6px;flex:1;overflow:hidden;text-overflow:ellipsis">{{this.address}}</div>
             <div class="actions">
               <a class="btn-ghost" href="/reports/{{this._id}}">View</a>
-              <a class="btn" href="/reports/{{this._id}}/edit">Edit</a>
+              {{#if (eq this.status "open")}}
+                <a class="btn" href="/reports/{{this._id}}/edit">Edit</a>
+              {{else}}
+                <a class="btn-ghost" style="opacity:0.6;pointer-events:none">Edit</a>
+              {{/if}}
+              <form action="/reports/{{this._id}}/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this report?');">
+                <button type="submit" class="btn-ghost" style="background-color: #fee2e2; color: #b91c1c;">Delete</button>
+              </form>
             </div>
           </div>
         </article>
@@ -66,5 +91,7 @@
       {{/if}}
     </div>
   </div>
+
+  {{> footer}}
 </body>
 </html>

@@ -123,6 +123,8 @@
   </style>
 </head>
 <body>
+  {{> header}}
+
   <div class="wrap">
     <div class="grid-layout">
       <aside class="sidebar" aria-label="Sidebar">
@@ -196,6 +198,9 @@
                       <div style="display:flex;gap:10px;align-items:center">
                         <div class="badge">{{this.status}}</div>
                         <a href="/reports/{{this._id}}" class="btn btn-ghost" style="text-decoration:none">View</a>
+                        {{#if (eq this.status "open")}}
+                          <a href="/reports/{{this._id}}/edit" class="btn btn-primary" style="text-decoration:none">Edit</a>
+                        {{/if}}
                       </div>
                     </div>
                   {{/each}}
@@ -209,7 +214,10 @@
       </main>
     </div>
   </div>
+
+  {{> footer}}
 </body>
+</html>
 
 <script>
   // Sign out via fetch to server logout route then redirect to main page
@@ -232,4 +240,3 @@
     }, { once: true });
   })();
 </script>
-</html>

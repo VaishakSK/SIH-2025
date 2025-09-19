@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Report • {{report.title}}</title>
+  <style>
+    :root{
+      --bg:#f5f8fb; --card:#fff; --muted:#6b7280; --accent:#06b6d4; --radius:12px; --shadow:0 12px 36px rgba(2,6,23,0.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#eef2f6);color:#071023}
+    .stage{min-height:100vh;padding:28px;display:flex;align-items:flex-start;justify-content:center}
+    .container{width:100%;max-width:1100px}
+    .panel{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid rgba(7,16,35,0.04)}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .title{font-weight:900;font-size:20px}
+    .meta{color:var(--muted);font-size:13px}
+    .layout{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}}
+    .imageBox{border-radius:12px;overflow:hidden;height:520px;background:#f7fbfc;display:flex;align-items:center;justify-content:center}
+    .imageBox img{width:100%;height:100%;object-fit:cover}
+    .info{display:flex;flex-direction:column;gap:10px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .chip{padding:8px 10px;border-radius:999px;background:linear-gradient(90deg,#ecfeff,#bbf7d0);color:#064e3b;font-weight:800}
+    .field{background:linear-gradient(180deg,#fff,#fbfdfe);padding:12px;border-radius:10px;border:1px solid rgba(7,16,35,0.04)}
+    .label{font-size:13px;color:var(--muted);margin-bottom:6px}
+    .desc{white-space:pre-wrap;line-height:1.6}
+    .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:white;font-weight:800;cursor:pointer}
+    .btn-ghost{padding:10px 14px;border-radius:10px;border:1px solid rgba(7,16,35,0.06);background:transparent;color:#071023;cursor:pointer}
+
+    /* global fixed back button (top-left) */
+    .global-back{
+      position:fixed;
+      left:20px;
+      top:20px;
+      z-index:999;
+      box-shadow:0 6px 18px rgba(2,6,23,0.08);
+      background:transparent;
+    }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <div class="stage">
+    <div class="container">
+      <div class="panel">
+        <div class="top">
+          <div>
+            <div class="title">{{report.title}}</div>
+            <div class="meta">Report ID: <strong>{{report.reportId}}</strong> • {{report.createdAtFormatted}}</div>
+          </div>
+          <div class="row">
+            <div class="chip">{{report.department}}</div>
+            <div class="chip" style="background:linear-gradient(90deg,#fef3c7,#fde68a);color:#92400e">{{report.status}}</div>
+          </div>
+        </div>
+
+        <div class="layout">
+          <div>
+            <div class="imageBox" aria-hidden="false">
+              <img src="{{report.imagePath}}" alt="{{report.title}}">
+            </div>
+
+            <div style="margin-top:12px" class="info">
+              <div class="field">
+                <div class="label">Address</div>
+                <div>{{report.address}}</div>
+              </div>
+
+              {{#if report.locationText}}
+              <div class="field">
+                <div class="label">Location (from geotag)</div>
+                <div>{{report.locationText}}</div>
+              </div>
+              {{/if}}
+
+              <div class="field">
+                <div class="label">Description</div>
+                <div class="desc">{{report.description}}</div>
+              </div>
+            </div>
+          </div>
+
+          <aside style="display:flex;flex-direction:column;gap:12px">
+            <div class="field">
+              <div class="label">Reporter</div>
+              <div>
+                {{#if report.user}}
+                  {{#if report.user.firstName}}{{report.user.firstName}} {{report.user.lastName}}{{else}}{{report.user.username}}{{/if}}
+                  <div style="font-size:13px;color:var(--muted)">{{report.user.email}}</div>
+                {{else}}
+                  {{report.user}}
+                {{/if}}
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="label">Status & metadata</div>
+              <div class="meta">
+                <div>Created: {{report.createdAtFormatted}}</div>
+                <div style="margin-top:6px">Last updated: {{report.updatedAtFormatted}}</div>
+              </div>
+            </div>
+
+            <div style="margin-top:auto" class="actions">
+              <a href="/reports" class="btn-ghost">Back to My Reports</a>
+              {{#if (eq report.status "open")}}
+                <a href="/reports/{{report._id}}/edit" class="btn">Edit</a>
+              {{else}}
+                <a class="btn btn-ghost" style="pointer-events:none;opacity:0.6">Edit</a>
+              {{/if}}
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+</body>
+</html>
