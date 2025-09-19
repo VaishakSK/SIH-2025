@@ -310,12 +310,11 @@ router.get('/reports', async (req, res) => {
   }
 });
 
-// GET view single report page
+// GET view single report page — public visibility
 router.get('/reports/:id', async (req, res) => {
   try {
-    if (!req.session || !req.session.userId) return res.redirect('/');
-    const report = await Report.findOne({ _id: req.params.id, user: req.session.userId }).populate('user', 'firstName lastName email username').lean();
-    if (!report) return res.status(404).send('Report not found or you do not have permission to view it.');
+    const report = await Report.findById(req.params.id).populate('user', 'firstName lastName email username').lean();
+    if (!report) return res.status(404).send('Report not found');
 
     report.createdAtFormatted = new Date(report.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     report.updatedAtFormatted = new Date(report.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });

@@ -75,7 +75,7 @@ app.use(async (req, res, next) => {
     res.locals.currentYear = new Date().getFullYear(); // provide year for footer
 
     if (req.session && req.session.userId) {
-      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId').lean();
+      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId avatarUrl').lean();
       if (user) {
         res.locals.currentUser = {
           id: user._id,
@@ -83,7 +83,8 @@ app.use(async (req, res, next) => {
           lastName: user.lastName || '',
           email: user.email || '',
           username: user.username || '',
-          googleId: user.googleId || null
+          googleId: user.googleId || null,
+          avatarUrl: user.avatarUrl || ''
         };
       }
     }

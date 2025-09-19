@@ -55,6 +55,9 @@
     .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .slider { background-color: var(--accent); }
     input:checked + .slider:before { transform: translateX(22px); }
+    .avatar-upload { display: flex; align-items: center; gap: 16px; }
+    .avatar-preview { width: 64px; height: 64px; border-radius: 50%; background: #e2e8f0; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
   </style>
 </head>
 <body>
@@ -85,7 +88,7 @@
           <section id="profile" class="active">
             <div class="card">
               <h2>Personal Information</h2>
-              <form action="/settings/profile" method="POST">
+              <form action="/settings/profile" method="POST" enctype="multipart/form-data">
                 <div class="grid-2">
                   <div class="field"><label for="firstName">First Name</label><input type="text" id="firstName" name="firstName" value="{{currentUser.firstName}}"></div>
                   <div class="field"><label for="lastName">Last Name</label><input type="text" id="lastName" name="lastName" value="{{currentUser.lastName}}"></div>
@@ -97,6 +100,19 @@
                 <div class="grid-2">
                   <div class="field"><label for="age">Age</label><input type="number" id="age" name="age" value="{{currentUser.age}}"></div>
                   <div class="field"><label for="sex">Sex</label><select id="sex" name="sex"><option value="male" {{#if (eq currentUser.sex "male")}}selected{{/if}}>Male</option><option value="female" {{#if (eq currentUser.sex "female")}}selected{{/if}}>Female</option><option value="other" {{#if (eq currentUser.sex "other")}}selected{{/if}}>Other</option></select></div>
+                </div>
+                <div class="field">
+                  <label for="avatar">Profile Photo</label>
+                  <div class="avatar-upload">
+                    <div class="avatar-preview">
+                      {{#if currentUser.avatarUrl}}
+                        <img src="{{currentUser.avatarUrl}}" alt="Current avatar">
+                      {{else}}
+                        <span style="font-size:12px;color:var(--text-2)">No photo</span>
+                      {{/if}}
+                    </div>
+                    <input type="file" id="avatar" name="avatar" accept="image/*">
+                  </div>
                 </div>
                 <button type="submit" class="btn">Save Profile</button>
               </form>
@@ -159,6 +175,23 @@
     // Permissions
     document.getElementById('cameraBtn').addEventListener('click', () => { navigator.mediaDevices.getUserMedia({ video: true }).then(() => alert('Camera access granted!')).catch(() => alert('Camera access denied.')); });
     document.getElementById('locationBtn').addEventListener('click', () => { navigator.geolocation.getCurrentPosition(() => showNotification('Location access granted!', 'success'), () => showNotification('Location access denied.', 'error')); });
+    // Avatar preview
+    (function(){
+      const input = document.getElementById('avatar');
+      if (!input) return;
+      input.addEventListener('change', function(){
+        const file = this.files && this.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        const preview = this.previousElementSibling && this.previousElementSibling.querySelector('img');
+        const holder = this.previousElementSibling;
+        if (preview) {
+          preview.src = url;
+        } else if (holder) {
+          holder.innerHTML = '<img alt="Avatar preview" src="'+url+'" />';
+        }
+      });
+    })();
   </script>
 </body>
 </html>

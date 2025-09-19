@@ -81,6 +81,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['male', 'female', 'other'],
         lowercase: true
+    },
+    avatarUrl: {
+        type: String,
+        trim: true
     }
 }, {
     timestamps: true // Adds createdAt and updatedAt fields automatically
