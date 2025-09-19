@@ -81,6 +81,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['male', 'female', 'other'],
         lowercase: true
+    },
+    // admin flag for admin app access
+    isAdmin: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true // Adds createdAt and updatedAt fields automatically

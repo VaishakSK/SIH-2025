@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Sign in - CivicSense</title>
+  <style>
+    :root{ --bg-1:#0f172a; --accent:#06b6d4; --accent-2:#0ea5a4; --muted:#94a3b8; --radius:16px; --shadow:0 20px 50px rgba(2,6,23,0.10); --border: rgba(15,23,42,0.08)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Helvetica,Arial;background:
+      radial-gradient(1200px 400px at 10% 10%, rgba(6,182,212,0.06), transparent),
+      radial-gradient(1000px 380px at 90% 0%, rgba(14,165,164,0.06), transparent),
+      linear-gradient(180deg,#f5f7fb,#eef2f6);color:var(--bg-1)}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:440px;background:linear-gradient(180deg,rgba(255,255,255,0.95),#fff);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+    .title{margin:0 0 6px 0;font-size:24px}
+    .sub{margin:0 0 16px 0;color:var(--muted);font-size:14px}
+    .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+    .input{padding:12px 14px;border-radius:12px;border:1px solid var(--border)}
+    .btn{width:100%;padding:12px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:800}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 10px 30px rgba(6,182,212,0.18)}
+    .btn-ghost{background:transparent;border:1px solid var(--border)}
+    .sep{display:flex;align-items:center;gap:10px;color:var(--muted);margin:12px 0}
+    .sep:before,.sep:after{content:"";flex:1;height:1px;background:var(--border)}
+    .links{display:flex;justify-content:space-between;margin-top:10px}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="dialog" aria-labelledby="loginTitle" aria-describedby="loginDesc">
+      <h1 id="loginTitle" class="title">Admin sign in</h1>
+      <p id="loginDesc" class="sub">Use your organization account to access the admin panel.</p>
+      <form method="post" action="/admin/login" novalidate>
+        <div class="field">
+          <label for="username">Username or email</label>
+          <input id="username" name="username" class="input" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" name="password" class="input" autocomplete="current-password" required />
+        </div>
+        <button class="btn btn-primary" type="submit">Sign in</button>
+      </form>
+      <div class="sep">or</div>
+      <a class="btn btn-ghost" href="/admin/auth/google" style="display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;color:inherit">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12  s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.64,6.053,29.083,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20  s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.108,18.961,13,24,13c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657  C33.64,6.053,29.083,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36  c-5.202,0-9.619-3.317-11.283-7.946l-6.553,5.046C9.471,39.556,16.227,44,24,44z"/>
+          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.793,2.237-2.231,4.166-3.994,5.571  c0,0,0.003-0.002,0.005-0.004l6.19,5.238C36.996,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+        </svg>
+        Continue with Google
+      </a>
+      <div class="links">
+        <span class="small">Forgot password?</span>
+        <a class="small" href="/admin/home">Back to home</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+

@@ -33,6 +33,7 @@ router.get('/dashboard', async (req, res) => {
       username: user.username,
       firstName: user.firstName || user.username,
       email: user.email,
+      isAdmin: !!user.isAdmin,
       googleId: user.googleId || null,
       reportsCount,
       openCount,

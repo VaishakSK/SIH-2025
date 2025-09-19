@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Settings - CivicSense Admin</title>
+  <style>
+    :root{
+      --bg-1:#0f172a; --muted:#94a3b8; --border:rgba(15,23,42,0.08);
+      --accent:#06b6d4; --accent-2:#0ea5a4; --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Helvetica,Arial;background:
+      radial-gradient(1200px 400px at 10% 10%, rgba(6,182,212,0.05), transparent),
+      radial-gradient(1000px 380px at 90% 0%, rgba(14,165,164,0.05), transparent),
+      linear-gradient(180deg,#f5f7fb,#eef2f6);color:var(--bg-1)}
+    .wrap{padding:20px;display:grid;grid-template-columns:280px 1fr;gap:16px;position:relative;overflow:hidden}
+
+    /* ambient ornaments */
+    .orn{position:absolute;filter:blur(60px);opacity:0.35;border-radius:999px;pointer-events:none}
+    .orn.a{width:420px;height:420px;background:radial-gradient(circle at 30% 30%, #67e8f9, transparent 60%);top:-120px;left:-120px}
+    .orn.b{width:520px;height:520px;background:radial-gradient(circle at 70% 40%, #a7f3d0, transparent 60%);bottom:-160px;right:-160px}
+    .grid-overlay{position:absolute;inset:0;background-image: linear-gradient(rgba(2,6,23,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(2,6,23,0.04) 1px, transparent 1px);background-size: 26px 26px;mask-image: radial-gradient(80% 60% at 50% 0%, black, transparent 70%);pointer-events:none}
+
+    .menu{position:sticky;top:16px;height:max-content;padding:16px;border-radius:var(--radius);
+      background:linear-gradient(180deg,rgba(255,255,255,0.92),#fff);backdrop-filter:blur(6px);
+      box-shadow:0 20px 50px rgba(2,6,23,0.07);border:1px solid var(--border)}
+    .content{padding:18px;border-radius:var(--radius);background:linear-gradient(180deg,rgba(255,255,255,0.96),#fff);
+      box-shadow:0 20px 50px rgba(2,6,23,0.07);border:1px solid var(--border)}
+    .group{margin-bottom:18px;padding:14px;border:1px dashed rgba(15,23,42,0.08);border-radius:14px}
+    .group h3{margin:0 0 8px 0;font-size:16px}
+    .sub{color:var(--muted);font-size:13px}
+
+    .menu ul{list-style:none;padding:0;margin:12px 0;display:flex;flex-direction:column;gap:8px}
+    .menu a{display:block;padding:10px 12px;border-radius:12px;color:var(--bg-1);text-decoration:none;font-weight:700;border:1px solid transparent}
+    .menu a:hover{background:#f0f9ff;border-color:rgba(6,182,212,0.25)}
+
+    .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+    .input{padding:12px 14px;border-radius:12px;border:1px solid var(--border);transition:border-color .2s ease, box-shadow .2s ease}
+    .input:focus{outline:none;border-color:rgba(6,182,212,0.6);box-shadow:0 0 0 4px rgba(6,182,212,0.15)}
+
+    .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:800;transition:transform .15s ease, box-shadow .2s ease}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(2,6,23,0.08)}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:0;color:#fff;box-shadow:0 12px 30px rgba(6,182,212,0.18)}
+
+    @media (max-width: 980px){
+      .wrap{grid-template-columns:1fr}
+      .menu{position:static}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="orn a" aria-hidden="true"></div>
+    <div class="orn b" aria-hidden="true"></div>
+    <div class="grid-overlay" aria-hidden="true"></div>
+    <aside class="menu">
+      <div style="font-weight:800;margin-bottom:8px">Settings</div>
+      <div class="sub">Configure platform</div>
+      <ul>
+        <li><a href="#org">Organization</a></li>
+        <li><a href="#theme">Theme</a></li>
+        <li><a href="#notifications">Notifications</a></li>
+        <li><a href="#integrations">Integrations</a></li>
+        <li><a href="#security">Security</a></li>
+      </ul>
+    </aside>
+    <main class="content">
+      <form method="post" action="/admin/settings">
+        <div id="org" class="group">
+          <h3>Organization</h3>
+          <div class="sub">Basic profile</div>
+          <div class="field">
+            <label for="orgName">Name</label>
+            <input id="orgName" name="orgName" class="input" value="{{adminSettings.orgName}}"/>
+          </div>
+          <div class="field">
+            <label for="orgEmail">Contact email</label>
+            <input id="orgEmail" name="orgEmail" class="input" value="{{adminSettings.orgEmail}}"/>
+          </div>
+        </div>
+
+        <div id="theme" class="group">
+          <h3>Theme</h3>
+          <div class="sub">Branding</div>
+          <div class="field">
+            <label for="primaryColor">Primary color</label>
+            <input id="primaryColor" name="primaryColor" class="input" value="{{adminSettings.primaryColor}}"/>
+          </div>
+          <div class="field">
+            <label for="accentColor">Accent color</label>
+            <input id="accentColor" name="accentColor" class="input" value="{{adminSettings.accentColor}}"/>
+          </div>
+        </div>
+
+        <div id="notifications" class="group">
+          <h3>Notifications</h3>
+          <div class="sub">Email gateway</div>
+          <div class="field">
+            <label for="smtpHost">SMTP host</label>
+            <input id="smtpHost" name="smtpHost" class="input" value="{{adminSettings.smtpHost}}"/>
+          </div>
+          <div class="field">
+            <label for="smtpUser">SMTP user</label>
+            <input id="smtpUser" name="smtpUser" class="input" value="{{adminSettings.smtpUser}}"/>
+          </div>
+        </div>
+
+        <div id="integrations" class="group">
+          <h3>Integrations</h3>
+          <div class="sub">External services</div>
+          <div class="field">
+            <label for="googleClientId">Google Client ID</label>
+            <input id="googleClientId" name="googleClientId" class="input" value="{{adminSettings.googleClientId}}"/>
+          </div>
+        </div>
+
+        <div id="security" class="group">
+          <h3>Security</h3>
+          <div class="sub">Access control</div>
+          <div class="field">
+            <label for="sessionTimeout">Session timeout (minutes)</label>
+            <input id="sessionTimeout" name="sessionTimeout" class="input" value="{{adminSettings.sessionTimeout}}"/>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn" type="reset">Reset</button>
+          <button class="btn btn-primary" type="submit">Save settings</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</body>
+</html>
+
+

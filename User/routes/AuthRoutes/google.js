@@ -9,6 +9,18 @@ function generateOtp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// generate random 10-digit phone number (non-zero leading digit)
+function generateRandomPhone() {
+    let phone = '';
+    for (let i = 0; i < 10; i++) {
+        phone += Math.floor(Math.random() * 10).toString();
+    }
+    if (phone[0] === '0') {
+        phone = '9' + phone.slice(1);
+    }
+    return phone;
+}
+
 async function sendOtpEmail(to, otp) {
     const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
@@ -28,15 +40,34 @@ async function sendOtpEmail(to, otp) {
     });
 }
 
+// helper to check if Google strategy is configured
+function isGoogleStrategyEnabled() {
+    try {
+        // passport._strategy throws if missing
+        return !!passport._strategy('google');
+    } catch (_) {
+        return false;
+    }
+}
+
 // start google OAuth — force account chooser
-router.get('/google', passport.authenticate('google', {
-    scope: ['profile', 'email'],
-    prompt: 'select_account'
-}));
+router.get('/google', (req, res, next) => {
+    if (!isGoogleStrategyEnabled()) {
+        return res.redirect('/?error=google_disabled');
+    }
+    return passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        prompt: 'select_account'
+    })(req, res, next);
+});
 
 // callback
-router.get('/google/callback',
-    passport.authenticate('google', { failureRedirect: '/', session: false }),
+router.get('/google/callback', (req, res, next) => {
+    if (!isGoogleStrategyEnabled()) {
+        return res.redirect('/?error=google_disabled');
+    }
+    return passport.authenticate('google', { failureRedirect: '/', session: false })(req, res, next);
+},
     async (req, res) => {
         try {
             const profile = req.user;
@@ -112,7 +143,7 @@ router.post('/verify-otp', async (req, res) => {
             username,
             password: randomPassword,
             email: temp.email,
-            phoneNumber: '0000000000',
+            phoneNumber: generateRandomPhone(),
             googleId: temp.googleId,
             isVerified: true
         });
