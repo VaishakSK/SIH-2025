@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Upload Photo • CivicConnect</title>
+  <style>
+    :root{
+      --bg-start:#f6f9fb;
+      --bg-end:#ffffff;
+      --card:#ffffff;
+      --accent:#0ea5a4;
+      --muted:#6b7280;
+      --glass: rgba(15,23,42,0.03);
+      --radius:12px;
+      --maxW:1200px;
+      --border:#e6eef7;
+      --text:#0b1220;
+      --gap:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg-start),var(--bg-end));color:var(--text)}
+    /* page layout - header, main, footer */
+    body{display:flex;flex-direction:column;min-height:100vh}
+    main.content{flex:1;display:flex;align-items:center;justify-content:center;padding:28px; margin-top: 40px;}
+    .shell{width:100%;max-width:var(--maxW);}
+
+    /* card & grid */
+    .card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:0 8px 30px rgba(15,23,42,0.06);border:1px solid var(--border);display:grid;grid-template-columns:1fr 420px;gap:var(--gap);align-items:start}
+    @media(max-width:980px){ .card{grid-template-columns:1fr} }
+
+    /* uploader */
+    .uploader{
+      height:64vh;border-radius:12px;
+      background:linear-gradient(180deg, rgba(10,20,30,0.01), rgba(10,20,30,0.005));
+      display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+      border:2px dashed rgba(10,20,30,0.06);padding:20px;position:relative;overflow:hidden
+    }
+    .uploader input[type=file]{display:none}
+    .placeholder{text-align:center;position:relative;z-index:2;pointer-events:none;transition:opacity .18s ease, transform .18s ease}
+    .placeholder.hidden{opacity:0;visibility:hidden;transform:scale(.995)}
+    .bigbtn{background:transparent;border:2px solid rgba(10,20,30,0.06);padding:12px 16px;border-radius:10px;color:var(--muted);cursor:pointer}
+    /* preview inside drop zone - absolutely positioned so it covers area */
+    .uploader img.preview{
+      position:absolute;
+      top:0;left:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:12px;
+      z-index:3;
+      display:none;
+    }
+
+    .preview{max-width:100%;max-height:100%;border-radius:10px;object-fit:cover}
+    .sidePreviewWrap{height:220px;border-radius:10px;background:linear-gradient(180deg, #fff, #fbfdfe);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+    .sidePreview{max-width:100%;max-height:100%;display:none;border-radius:8px;object-fit:cover}
+    .muted{color:var(--muted);font-size:13px}
+
+    /* controls & buttons */
+    .controls{display:flex;gap:10px;align-items:center;justify-content:flex-start;margin-top:12px}
+    .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(10,20,30,0.06);padding:10px 12px;border-radius:10px;color:var(--text);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .locRow{display:flex;gap:8px;align-items:center;margin-top:12px}
+
+    /* right column */
+    .meta{display:flex;flex-direction:column;gap:12px}
+    .meta .cardInner{background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;padding:14px;border:1px solid var(--border)}
+    .footer-actions{display:flex;gap:8px;justify-content:flex-end}
+
+    /* accessibility & small tweaks */
+    #dropZone.hover{border-color:rgba(14,165,164,0.3);box-shadow:0 8px 30px rgba(14,165,164,0.06)}
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <main class="content" role="main">
+    <div class="shell">
+      <div class="card" role="region" aria-label="Upload photo and location">
+        <!-- Left: uploader area -->
+        <div>
+          <h2 style="margin:0 0 8px 0">Upload Photo</h2>
+          <p class="muted" style="margin:0 0 12px 0">Choose a photo and optionally attach your location. Click Done to continue to the review step.</p>
+
+          <form id="uploadForm" action="/report/upload-temp" method="POST" enctype="multipart/form-data">
+            <label id="dropZone" class="uploader" for="photo" aria-describedby="uploadHelp">
+              <input id="photo" name="photo" type="file" accept="image/*">
+              <div id="placeholder" class="placeholder">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v10" stroke="#0ea5a4" stroke-width="1.6" stroke-linecap="round"/><path d="M8 7l4-4 4 4" stroke="#0ea5a4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div style="font-weight:700;font-size:16px;margin-top:8px">Drop or choose a photo</div>
+                <div class="muted" style="margin-top:6px">JPEG, PNG, WEBP — up to 6 MB</div>
+                <div class="controls">
+                  <button type="button" id="chooseBtn" class="bigbtn">Choose file</button>
+                  <button type="button" id="clearBtn" class="btn-ghost">Clear</button>
+                </div>
+                <div id="uploadHelp" class="muted" style="margin-top:10px">You can re-upload or clear before pressing Done.</div>
+              </div>
+              <img id="preview" class="preview" alt="Selected photo preview">
+            </label>
+
+            <!-- hidden location fields -->
+            <div style="margin-top:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="muted">Attach location (optional)</div>
+                <div class="muted">Recommended for faster action</div>
+              </div>
+
+              <div class="locRow">
+                <input id="address" name="address" type="text" placeholder="Street / area (will auto-fill)" />
+                <button id="useLoc" type="button" class="btn-ghost">Use my location</button>
+              </div>
+
+              <input type="hidden" id="latitude" name="latitude">
+              <input type="hidden" id="longitude" name="longitude">
+              <input type="hidden" id="locationText" name="locationText">
+            </div>
+
+            <div style="margin-top:14px" class="footer-actions">
+              <a class="btn-ghost" href="/report">Back</a>
+              <button id="doneBtn" class="btn" type="submit">Done</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right: preview & tips -->
+        <aside class="meta" aria-hidden="false">
+          <div class="cardInner">
+            <h4 style="margin:0 0 8px 0">Preview</h4>
+            <div class="sidePreviewWrap" id="previewWrap" aria-live="polite">
+              <img id="sidePreview" class="sidePreview" alt="Preview of selected photo">
+              <div id="emptyPreview" class="muted">No image selected</div>
+            </div>
+          </div>
+
+          <div class="cardInner">
+            <h4 style="margin:0 0 8px 0">Submission tips</h4>
+            <ul class="muted" style="margin:0 0 0 18px;padding:0;line-height:1.6">
+              <li>Capture the issue clearly, include context (surrounding area).</li>
+              <li>Add an exact address or landmark to speed up resolution.</li>
+              <li>After Done you'll be able to add title and description.</li>
+            </ul>
+          </div>
+
+          <div class="cardInner">
+            <h4 style="margin:0 0 8px 0">Size & format</h4>
+            <p class="muted" style="margin:0">Allowed: JPG, PNG, WEBP. Max size: 6 MB.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  {{> footer}}
+
+  <script>
+  (function(){
+    const photo = document.getElementById('photo');
+    const chooseBtn = document.getElementById('chooseBtn');
+    const dropZone = document.getElementById('dropZone');
+    const preview = document.getElementById('preview');
+    const sidePreview = document.getElementById('sidePreview');
+    const emptyPreview = document.getElementById('emptyPreview');
+    const placeholder = document.getElementById('placeholder');
+    const address = document.getElementById('address');
+    const useLoc = document.getElementById('useLoc');
+    const latField = document.getElementById('latitude');
+    const lonField = document.getElementById('longitude');
+    const locationText = document.getElementById('locationText');
+    const clearBtn = document.getElementById('clearBtn');
+    const maxBytes = 6 * 1024 * 1024;
+
+    chooseBtn.addEventListener('click', ()=>photo.click());
+    photo.addEventListener('change', ()=>{ const f = photo.files[0]; if (!f) return; handleFile(f); });
+
+    // drag & drop styling + drop
+    ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, (e)=>{ e.preventDefault(); dropZone.classList.add('hover'); }));
+    ['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, (e)=>{ e.preventDefault(); dropZone.classList.remove('hover'); }));
+    dropZone.addEventListener('drop', e=>{ e.preventDefault(); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) { const dt = new DataTransfer(); dt.items.add(f); photo.files = dt.files; handleFile(f); } });
+
+    function handleFile(f){
+      if (!f) return;
+      if (f.size > maxBytes) { alert('Image too large (max 6MB)'); photo.value=''; return; }
+      const allowed = ['image/jpeg','image/png','image/webp'];
+      if (!allowed.includes(f.type)) { alert('Only jpg / png / webp allowed'); photo.value=''; return; }
+
+      // revoke previous object URLs to avoid leaks
+      try {
+        if (preview._url) URL.revokeObjectURL(preview._url);
+        if (sidePreview._url && sidePreview._url !== preview._url) URL.revokeObjectURL(sidePreview._url);
+      } catch (err) { /* ignore */ }
+
+      const url = URL.createObjectURL(f);
+
+      // show image inside the drop area (replacing placeholder) and in the side preview
+      preview.src = url;
+      preview._url = url;
+      preview.style.display = 'block';
+      preview.alt = f.name || 'Selected photo';
+
+      // hide placeholder (use class to animate)
+      if (placeholder) placeholder.classList.add('hidden');
+
+      sidePreview.src = url;
+      sidePreview._url = url;
+      sidePreview.style.display = 'block';
+      sidePreview.alt = f.name || 'Selected photo';
+      emptyPreview.style.display = 'none';
+    }
+
+    clearBtn.addEventListener('click', ()=>{ 
+      photo.value='';
+      // revoke URLs and cleanup
+      try { if (preview._url) URL.revokeObjectURL(preview._url); if (sidePreview._url) URL.revokeObjectURL(sidePreview._url); } catch(e){}
+      preview.src=''; preview.style.display='none'; preview._url = null;
+      sidePreview.src=''; sidePreview.style.display='none'; sidePreview._url = null;
+      emptyPreview.style.display='block';
+      if (placeholder) placeholder.classList.remove('hidden');
+
+      address.value=''; latField.value=''; lonField.value=''; locationText.value='';
+    });
+
+    useLoc.addEventListener('click', ()=>{
+      if (!navigator.geolocation){ alert('Geolocation not supported'); return; }
+      useLoc.disabled=true; useLoc.textContent='Getting…';
+      navigator.geolocation.getCurrentPosition(async pos=>{
+        latField.value = pos.coords.latitude; lonField.value = pos.coords.longitude;
+        try{
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(pos.coords.latitude)}&lon=${encodeURIComponent(pos.coords.longitude)}&addressdetails=1`;
+          const r = await fetch(url);
+          if (r.ok){ const data = await r.json(); const human = data.display_name || ''; if (human){ address.value = human; locationText.value = human; } }
+        }catch(e){ console.warn('reverse failed', e); }
+        useLoc.disabled=false; useLoc.textContent='Use my location';
+      }, err=>{ alert('Could not get location: '+(err.message||err)); useLoc.disabled=false; useLoc.textContent='Use my location'; }, { enableHighAccuracy:true, timeout:15000 });
+    });
+
+    document.getElementById('uploadForm').addEventListener('submit', function(e){
+      if (!photo.files[0]){ e.preventDefault(); alert('Please choose a photo'); return; }
+      // allow empty address here; user can fill in review step
+    });
+
+    // cleanup object URLs when page unloads
+    window.addEventListener('beforeunload', ()=>{ try{ if (preview._url) URL.revokeObjectURL(preview._url); if (sidePreview._url) URL.revokeObjectURL(sidePreview._url); }catch(e){} });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Create Report - Choose method</title>
+  <style>
+    :root{ --bg:#f3f6f9; --card:#fff; --accent:#06b6d4; --muted:#64748b; --radius:12px }
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#fff)}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+    .panel{background:var(--card);padding:28px;border-radius:12px;max-width:760px;width:100%;text-align:center;box-shadow:0 12px 36px rgba(2,6,23,0.06)}
+    .opts{display:flex;gap:18px;justify-content:center;margin-top:18px}
+    .opt{flex:1;padding:18px;border-radius:10px;border:1px solid rgba(7,16,35,0.06);cursor:pointer;text-decoration:none;color:inherit}
+    .opt h3{margin:0 0 8px 0}
+    .muted{color:var(--muted);font-size:14px}
+    .btn{display:inline-block;margin-top:18px;padding:10px 14px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-weight:800}
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <div class="wrap">
+    <div class="panel">
+      <h2>Create a new report</h2>
+      <p class="muted">Choose how you'd like to submit the photo of the issue</p>
+
+      <div class="opts">
+        <a class="opt" href="/report/upload">
+          <h3>Upload from browser</h3>
+          <div class="muted">Choose an image file saved on your device</div>
+        </a>
+
+        <a class="opt" href="/report/camera">
+          <h3>Use camera</h3>
+          <div class="muted">Open your camera, capture a photo and automatically attach your address</div>
+        </a>
+      </div>
+
+      <a class="btn" href="/dashboard">Back to dashboard</a>
+    </div>
+  </div>
+
+  {{> footer}}
+</body>
+</html>

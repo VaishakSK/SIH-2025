@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Edit Report - {{report.title}}</title>
+  <style>
+    :root{--bg:#f3f6f9;--card:#fff;--muted:#64748b;--accent:#06b6d4;--radius:12px;--shadow:0 8px 30px rgba(2,6,23,0.06)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#fff);color:#071023}
+    .stage{min-height:100vh;padding:28px;display:flex;align-items:flex-start;justify-content:center}
+    .container{width:100%;max-width:1100px}
+    .panel{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid rgba(7,16,35,0.04)}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    .field{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    label{font-weight:700}
+    input, select, textarea{padding:10px;border-radius:8px;border:1px solid #e6eef0}
+    textarea{min-height:140px}
+    .thumb{height:320px;border-radius:10px;overflow:hidden;background:#f7fbfc;display:flex;align-items:center;justify-content:center}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:white;font-weight:800;cursor:pointer}
+    .btn-ghost{padding:10px 12px;border-radius:8px;border:1px solid rgba(7,16,35,0.06);background:transparent;color:#071023}
+
+    /* global fixed back button (top-left) */
+    .global-back{
+      position:fixed;
+      left:20px;
+      top:20px;
+      z-index:999;
+      box-shadow:0 6px 18px rgba(2,6,23,0.08);
+      background:transparent;
+    }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <div class="stage">
+    <div class="container">
+      <div class="panel">
+        <h2>Edit Report</h2>
+        <p style="color:var(--muted)">You can edit this report only because its status is "open".</p>
+
+        <form action="/reports/{{report._id}}/edit" method="POST" enctype="multipart/form-data" id="editForm">
+          <div class="grid">
+            <div>
+              <div class="field">
+                <label for="title">Title</label>
+                <input id="title" name="title" type="text" value="{{report.title}}" required>
+              </div>
+
+              <div class="field">
+                <label for="department">Department</label>
+                <select id="department" name="department" required>
+                  <option value="sanitation" {{#if (eq report.department "sanitation")}}selected{{/if}}>Sanitation</option>
+                  <option value="roads" {{#if (eq report.department "roads")}}selected{{/if}}>Roads & Infrastructure</option>
+                  <option value="electricity" {{#if (eq report.department "electricity")}}selected{{/if}}>Electricity</option>
+                  <option value="water" {{#if (eq report.department "water")}}selected{{/if}}>Water Supply</option>
+                  <option value="others" {{#if (eq report.department "others")}}selected{{/if}}>Others</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="address">Address</label>
+                <input id="address" name="address" type="text" value="{{report.address}}" required>
+              </div>
+
+              <div class="field">
+                <label for="locationText">Location (optional)</label>
+                <input id="locationText" name="locationText" type="text" value="{{report.locationText}}">
+              </div>
+
+              <div class="field">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" required>{{report.description}}</textarea>
+              </div>
+
+              <div class="actions">
+                <a class="btn-ghost" href="/reports/{{report._id}}">Cancel</a>
+                <button class="btn" type="submit">Save changes</button>
+              </div>
+            </div>
+
+            <aside>
+              <div class="thumb">
+                <img id="currentImg" src="{{report.imagePath}}" alt="Current photo">
+              </div>
+
+              <div style="margin-top:12px" class="field">
+                <label for="photo">Replace photo (optional)</label>
+                <input id="photo" name="photo" type="file" accept="image/*">
+              </div>
+
+              <div class="field" style="margin-top:6px">
+                <div class="muted">Status: <strong>{{report.status}}</strong></div>
+                <div class="muted">Report ID: {{report.reportId}}</div>
+                <div class="muted">Created: {{report.createdAt}}</div>
+              </div>
+            </aside>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    // basic client validation for title (<=10 words) and description (30-250)
+    (function(){
+      const title = document.getElementById('title');
+      const desc = document.getElementById('description');
+      const form = document.getElementById('editForm');
+
+      function titleOk(){
+        const n = (title.value||'').trim().split(/\s+/).filter(Boolean).length;
+        return n >=1 && n <=10;
+      }
+      form.addEventListener('submit', function(e){
+        const n = (title.value||'').trim().split(/\s+/).filter(Boolean).length;
+        if (!titleOk()){
+          e.preventDefault();
+          alert('Title must be 1–10 words');
+          title.focus();
+          return;
+        }
+        const words = (desc.value||'').trim().split(/\s+/).filter(Boolean).length;
+        if (words < 30 || words > 250){
+          e.preventDefault();
+          alert('Description must be 30–250 words (current: ' + words + ')');
+          desc.focus();
+          return;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

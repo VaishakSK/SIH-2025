@@ -2,14 +2,16 @@ require('dotenv').config();
 const express = require("express");
 const mongoose = require('mongoose');
 const hbs = require('hbs');
+const path = require('path');
+const User = require('./models/user'); // <-- ADD this line
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
-const path = require('path');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 // add passport and google strategy
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
 
 // Import routes
 const mainRoutes = require('./routes/main');
@@ -54,12 +56,39 @@ passport.use(new GoogleStrategy({
 }));
 
 // Set view engine to handlebars
-app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'hbs');
 
-// Helper function to check if two values are equal
-hbs.registerHelper('eq', function (a, b) {
-    return a === b;
+// register partials directory for header/footer
+hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
+
+// expose site name and load full current user into res.locals
+app.use(async (req, res, next) => {
+  try {
+    res.locals.siteName = 'CivicConnect';
+    res.locals.currentUser = null;
+    res.locals.currentYear = new Date().getFullYear(); // provide year for footer
+
+    if (req.session && req.session.userId) {
+      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId').lean();
+      if (user) {
+        res.locals.currentUser = {
+          id: user._id,
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          username: user.username || '',
+          googleId: user.googleId || null
+        };
+      }
+    }
+    return next();
+  } catch (err) {
+    console.error('Failed to populate currentUser for views:', err);
+    res.locals.currentUser = null;
+    res.locals.currentYear = new Date().getFullYear();
+    return next();
+  }
 });
 
 // Use routes
@@ -78,6 +107,10 @@ app.get('/login', (req, res) => {
 // serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+//helper functions
+hbs.registerHelper('eq', function (a, b) {
+    return a === b;
+});
 // mount report route
 const reportRoutes = require('./routes/Report/report');
 app.use('/', reportRoutes);

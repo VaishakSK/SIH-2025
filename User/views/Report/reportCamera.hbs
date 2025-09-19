@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Capture Photo • CivicConnect</title>
+  <style>
+    :root{
+      --bg-start:#f6f9fb; --bg-end:#ffffff; --card:#ffffff;
+      --accent:#0ea5a4; --muted:#6b7280; --radius:12px; --border:#e6eef7;
+      --text:#0b1220; --maxW:1200px; --gap:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg-start),var(--bg-end));color:var(--text)}
+    body{display:flex;flex-direction:column;min-height:100vh}
+    main.content{flex:1;display:flex;align-items:center;justify-content:center;padding:28px; margin-top:40px}
+    .shell{width:100%;max-width:var(--maxW)}
+    .card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:0 8px 30px rgba(15,23,42,0.06);border:1px solid var(--border);display:grid;grid-template-columns:1fr 420px;gap:var(--gap);align-items:start}
+    @media(max-width:980px){ .card{grid-template-columns:1fr} }
+
+    /* camera + preview */
+    .uploader{height:64vh;border-radius:12px;background:linear-gradient(180deg, rgba(10,20,30,0.01), rgba(10,20,30,0.005));display:flex;flex-direction:column;gap:12px;border:2px dashed rgba(10,20,30,0.06);padding:12px;position:relative;overflow:hidden}
+    .placeholder{position:relative;z-index:4;text-align:center;pointer-events:auto;transition:opacity .18s}
+    .placeholder.hidden{opacity:0;visibility:hidden;transform:scale(.995)}
+    .videoWrap{width:100%;height:120%;border-radius:8px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+    video#video{width:100%;height:100%;object-fit:cover;display:block}
+    .uploader img.preview{width:100%;height:60%;object-fit:cover;border-radius:8px;display:none;margin-top:8px}
+    .controls{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px}
+    .bigbtn{background:transparent;border:2px solid rgba(10,20,30,0.06);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .btn{background:var(--accent);color:#fff;padding:10px 12px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(10,20,30,0.06);padding:10px 12px;border-radius:10px;color:var(--text);cursor:pointer}
+    .sidePreviewWrap{height:220px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdfe);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+    .sidePreview{max-width:100%;max-height:100%;display:none;border-radius:8px;object-fit:cover}
+    .muted{color:var(--muted);font-size:13px}
+    .locRow{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .footer-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+    input[type="text"]{padding:10px;border-radius:8px;border:1px solid var(--border);width:100%}
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <main class="content" role="main">
+    <div class="shell">
+      <div class="card" role="region" aria-label="Capture photo and location">
+        <div>
+          <h2 style="margin:0 0 8px 0">Capture Photo</h2>
+          <p class="muted" style="margin:0 0 12px 0">Allow camera and location. Capture replaces live view in-place; retake if needed.</p>
+
+          <form id="cameraForm" method="POST" action="/report/capture-temp">
+            <label class="uploader" id="dropZone" aria-describedby="captureHelp">
+              {{!-- <div id="placeholder" class="placeholder">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v10" stroke="#0ea5a4" stroke-width="1.6" stroke-linecap="round"/><path d="M8 7l4-4 4 4" stroke="#0ea5a4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div style="font-weight:700;font-size:16px;margin-top:8px">Camera ready</div>
+                <div class="muted" style="margin-top:6px">Press Start, then Capture. Retake allowed before Done.</div>
+              </div> --}}
+ 
+              <div class="videoWrap" id="videoWrap" aria-hidden="false">
+                 <video id="video" autoplay playsinline></video>
+               </div>
+ 
+              <img id="preview" class="preview" alt="Captured photo preview">
+              <!-- controls placed below video/preview -->
+              <div class="controls" id="cameraControls">
+                <button type="button" id="startBtn" class="bigbtn">Start Camera</button>
+                <button type="button" id="captureBtn" class="btn">Capture</button>
+                <button type="button" id="retakeBtn" class="btn-ghost" style="display:none">Retake</button>
+              </div>
+            </label>
+
+            <input type="hidden" id="imageBase64" name="imageBase64">
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+            <input type="hidden" id="locationText" name="locationText">
+
+            <div style="margin-top:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="muted">Attach location (optional)</div>
+                <div class="muted">Recommended for faster action</div>
+              </div>
+
+              <div class="locRow">
+                <input id="address" name="address" type="text" placeholder="Street / area (will auto-fill)" />
+                <button id="useLoc" type="button" class="btn-ghost">Use my location</button>
+              </div>
+            </div>
+
+            <div class="footer-actions">
+              <a class="btn-ghost" href="/report">Back</a>
+              <button id="doneBtn" class="btn" type="submit">Done</button>
+            </div>
+          </form>
+        </div>
+
+        <aside class="meta" aria-hidden="false">
+          <div class="cardInner" style="background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;padding:14px;border:1px solid var(--border)">
+            <h4 style="margin:0 0 8px 0">Preview</h4>
+            <div class="sidePreviewWrap" id="previewWrap" aria-live="polite">
+              <img id="sidePreview" class="sidePreview" alt="Preview of captured photo">
+              <div id="emptyPreview" class="muted">No image captured</div>
+            </div>
+          </div>
+
+          <div class="cardInner" style="background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;padding:14px;border:1px solid var(--border)">
+            <h4 style="margin:0 0 8px 0">Submission tips</h4>
+            <ul class="muted" style="margin:0 0 0 18px;padding:0;line-height:1.6">
+              <li>Capture the issue clearly, include surrounding context.</li>
+              <li>Add an exact address or landmark for faster action.</li>
+              <li>You will be able to review and edit details after Done.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  {{> footer}}
+
+  <script>
+  (function(){
+    const startBtn = document.getElementById('startBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const video = document.getElementById('video');
+    const videoWrap = document.getElementById('videoWrap');
+    const preview = document.getElementById('preview');
+    const sidePreview = document.getElementById('sidePreview');
+    const emptyPreview = document.getElementById('emptyPreview');
+    const placeholder = document.getElementById('placeholder');
+    const imageBase64 = document.getElementById('imageBase64');
+    const latField = document.getElementById('latitude');
+    const lonField = document.getElementById('longitude');
+    const locationText = document.getElementById('locationText');
+    const address = document.getElementById('address');
+    const useLoc = document.getElementById('useLoc');
+    const doneBtn = document.getElementById('doneBtn');
+
+    let stream = null;
+    const canvas = document.createElement('canvas');
+
+    async function startCamera(){
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+        video.srcObject = stream;
+        videoWrap.style.display = 'flex'; // Show video wrapper
+        placeholder.classList.add('hidden');
+        preview.style.display = 'none';
+        retakeBtn.style.display = 'none';
+        captureBtn.style.display = '';
+      } catch (err) {
+        alert('Cannot access camera: ' + (err.message||err));
+      }
+    }
+
+    startBtn.addEventListener('click', startCamera);
+    // try to auto-start quietly
+    startCamera().catch(()=>{});
+
+    captureBtn.addEventListener('click', ()=>{
+      if (!video || !video.srcObject) return alert('Start camera first');
+      const w = video.videoWidth || 1280;
+      const h = video.videoHeight || 720;
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      imageBase64.value = dataUrl;
+
+      // show preview in drop area and side preview
+      preview.src = dataUrl; preview.style.display = 'block';
+      videoWrap.style.display = 'none'; // Hide video wrapper
+      sidePreview.src = dataUrl; sidePreview.style.display = 'block';
+      emptyPreview.style.display = 'none';
+
+      // stop camera
+      if (stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; video.srcObject = null; }
+      retakeBtn.style.display = '';
+      captureBtn.style.display = 'none';
+      placeholder.classList.add('hidden');
+    });
+
+    retakeBtn.addEventListener('click', ()=>{
+      // clear preview and restart camera
+      imageBase64.value = '';
+      preview.src = ''; preview.style.display = 'none';
+      sidePreview.src = ''; sidePreview.style.display = 'none';
+      emptyPreview.style.display = 'block';
+      captureBtn.style.display = '';
+      retakeBtn.style.display = 'none';
+      placeholder.classList.remove('hidden');
+      startCamera();
+    });
+
+    useLoc.addEventListener('click', ()=>{
+      if (!navigator.geolocation){ alert('Geolocation not supported'); return; }
+      useLoc.disabled=true; useLoc.textContent='Getting…';
+      navigator.geolocation.getCurrentPosition(async pos=>{
+        latField.value = pos.coords.latitude; lonField.value = pos.coords.longitude;
+        try{
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(pos.coords.latitude)}&lon=${encodeURIComponent(pos.coords.longitude)}&addressdetails=1`;
+          const r = await fetch(url);
+          if (r.ok){ const data = await r.json(); const human = data.display_name || ''; if (human){ address.value = human; locationText.value = human; } }
+        }catch(e){ console.warn('reverse failed', e); }
+        useLoc.disabled=false; useLoc.textContent='Use my location';
+      }, err=>{ alert('Could not get location: '+(err.message||err)); useLoc.disabled=false; useLoc.textContent='Use my location'; }, { enableHighAccuracy:true, timeout:15000 });
+    });
+
+    document.getElementById('cameraForm').addEventListener('submit', function(e){
+      if (!imageBase64.value){ e.preventDefault(); alert('Capture a photo before continuing'); return; }
+      // address optional here
+      doneBtn.disabled = true; doneBtn.textContent = 'Submitting…';
+    });
+
+    window.addEventListener('beforeunload', ()=>{ try{ if (stream) stream.getTracks().forEach(t=>t.stop()); }catch(e){} });
+  })();
+  </script>
+</body>
+</html>

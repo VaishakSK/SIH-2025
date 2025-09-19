@@ -39,6 +39,10 @@ const reportSchema = new mongoose.Schema({
   department: { type: String, required: [true, 'Department is required'], trim: true },
   address: { type: String, required: [true, 'Address is required'], trim: true },
   locationText: { type: String, trim: true }, // human readable from geotag
+  geoLocation: {
+    latitude: { type: Number, default: null },
+    longitude: { type: Number, default: null }
+  },
   status: { type: String, enum: ['open','in_progress','resolved','closed'], default: 'open' },
   description: {
     type: String,
