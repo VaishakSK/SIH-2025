@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Reports - CivicConnect</title>
+  <style>
+    :root{
+      --bg:#f3f6f9; --card:#fff; --muted:#64748b;
+      --accent:#06b6d4; --radius:12px; --shadow:0 8px 30px rgba(2,6,23,0.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#fff);color:#071023}
+    .stage{min-height:100vh;padding:28px}
+    .container{max-width:1400px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}}
+
+    .card{
+      background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border:1px solid rgba(7,16,35,0.04);
+      display:flex;flex-direction:column;height:100%;
+    }
+    .thumb{height:180px;border-radius:10px;overflow:hidden;background:#f7fbfc;display:flex;align-items:center;justify-content:center}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .info{padding:12px 0;flex:1;display:flex;flex-direction:column;gap:8px}
+    .title{font-weight:800;font-size:16px}
+    .meta{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+    .badge{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#ecfeff,#bbf7d0);color:#064e3b;font-weight:800;font-size:13px}
+    .actions{display:flex;gap:8px;align-items:center}
+    .btn{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;font-weight:800;text-decoration:none}
+    .btn-ghost{padding:8px 12px;border-radius:8px;border:1px solid rgba(7,16,35,0.06);background:transparent;color:#071023;text-decoration:none;font-weight:700}
+    .empty{padding:40px;text-align:center;color:var(--muted);background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;box-shadow:var(--shadow)}
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="container">
+      <h1 style="margin:0 0 14px 0">My Reports</h1>
+      {{#if reports.length}}
+      <div class="grid" aria-live="polite">
+        {{#each reports}}
+        <article class="card" role="article">
+          <div class="thumb">
+            <img src="{{this.imagePath}}" alt="{{this.title}}">
+          </div>
+          <div class="info">
+            <div class="title">{{this.title}}</div>
+            <div class="meta">
+              <div>{{this.department}}</div>
+              <div>•</div>
+              <div>{{this.createdAtFormatted}}</div>
+              <div style="margin-left:auto"><span class="badge">{{this.status}}</span></div>
+            </div>
+            <div class="muted" style="margin-top:6px;flex:1;overflow:hidden;text-overflow:ellipsis">{{this.address}}</div>
+            <div class="actions">
+              <a class="btn-ghost" href="/reports/{{this._id}}">View</a>
+              <a class="btn" href="/reports/{{this._id}}/edit">Edit</a>
+            </div>
+          </div>
+        </article>
+        {{/each}}
+      </div>
+      {{else}}
+        <div class="empty">You have no reports yet. Click <a href="/report" style="color:var(--accent)">Create Report</a> to file your first issue.</div>
+      {{/if}}
+    </div>
+  </div>
+</body>
+</html>

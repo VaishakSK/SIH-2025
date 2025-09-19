@@ -1,0 +1,14 @@
+mongoose
+multer
+bcrypt
+passport
+passport-google-oauth20 
+express-session
+connect-mongo   
+dotenv  
+express 
+hbs
+body-parser
+nodemon
+mongoose-findorcreate
+express-validator

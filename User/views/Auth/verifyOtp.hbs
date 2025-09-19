@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verify Email - CivicConnect</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg1: #eef2f7;
+      --bg2: #f8fafc;
+      --card: rgba(255,255,255,0.9);
+      --glass: rgba(255,255,255,0.6);
+      --accent: #06b6d4;
+      --accent-dark: #0891b2;
+      --muted: #6b7280;
+      --danger: #ef4444;
+      --radius: 14px;
+      --shadow: 0 12px 40px rgba(3,7,18,0.08);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#0f172a}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+    .card{
+      width:100%;max-width:480px;background:var(--card);backdrop-filter: blur(6px);border-radius:var(--radius);box-shadow:var(--shadow);
+      padding:28px; border:1px solid rgba(15,23,42,0.04);
+    }
+    .brand{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+    .logo{
+      width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#ecfeff,#dbeafe);font-weight:800;color:var(--accent-dark);font-size:20px;
+      box-shadow:0 6px 18px rgba(6,182,212,0.08);
+    }
+    h2{margin:0;font-size:20px}
+    p.lead{color:var(--muted);margin:8px 0 18px 0;font-size:14px}
+    .error{color:var(--danger);margin-bottom:12px;font-weight:700}
+    .otpWrap{display:flex;flex-direction:column;gap:12px}
+    .inputBox{
+      display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);
+      background:linear-gradient(180deg,rgba(255,255,255,0.8),transparent);
+    }
+    .inputBox .icon{
+      width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#f0f9ff,#fff7ed);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent-dark)
+    }
+    input[type="tel"].otp{
+      flex:1;border:0;background:transparent;font-size:20px;padding:6px 4px;outline:none;
+      letter-spacing:6px;font-weight:700;
+    }
+    .muted{font-size:13px;color:var(--muted)}
+    .actions{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn-primary{background:var(--accent);color:white;box-shadow:0 10px 28px rgba(6,182,212,0.12)}
+    .btn-ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:#0f172a}
+    .smallLink{font-size:13px;color:var(--accent-dark);text-decoration:none}
+    .timer{font-weight:700;color:var(--muted);font-size:13px}
+    .resend{background:transparent;border:0;color:var(--accent-dark);font-weight:700;cursor:pointer}
+    /* responsive */
+    @media (max-width:520px){
+      .card{padding:20px}
+      .logo{width:48px;height:48px;font-size:18px}
+      input[type="tel"].otp{font-size:18px;letter-spacing:5px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="main" aria-labelledby="verifyTitle">
+      <div class="brand">
+        <div class="logo">CC</div>
+        <div>
+          <h2 id="verifyTitle">Verify Your Email</h2>
+          <div class="muted" style="font-size:13px">Enter the 6-digit code we sent to <strong>{{email}}</strong></div>
+        </div>
+      </div>
+
+      {{#if error}}<div class="error" role="alert">{{error}}</div>{{/if}}
+
+      <form method="POST" action="/auth/verify-otp" class="otpWrap" onsubmit="return validateAndSubmit(event)">
+        <div class="inputBox" aria-hidden="false">
+          <div class="icon">✉️</div>
+          <input id="otpInput" name="otp" class="otp" type="tel" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
+                 placeholder="● ● ● ● ● ●" aria-label="6 digit verification code" required>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="muted timer" id="countdown">Expires in 10:00</div>
+          <div>
+            <button type="button" class="resend" id="resendBtn" onclick="resendOtp()" disabled>Resend</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Verify</button>
+          <a href="/" class="btn btn-ghost" style="text-decoration:none">Cancel</a>
+        </div>
+      </form>
+
+      <div style="margin-top:14px" class="muted">Didn't receive the code? Check spam or try <a href="mailto:{{email}}" class="smallLink">contacting support</a>.</div>
+    </div>
+  </div>
+
+  <script>
+    // UX: Restrict to digits, ensure length 6 before submit, simple countdown & resend enable
+    (function(){
+      const otpInput = document.getElementById('otpInput');
+      otpInput.addEventListener('input', (e)=>{
+        // strip non-digits and enforce maxlength
+        const val = e.target.value.replace(/\D/g,'').slice(0,6);
+        e.target.value = val;
+      });
+
+      let total = 10 * 60; // 10 minutes
+      const countdown = document.getElementById('countdown');
+      const resendBtn = document.getElementById('resendBtn');
+
+      function format(t){ const m = Math.floor(t/60).toString().padStart(2,'0'); const s = (t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+
+      const timer = setInterval(()=>{
+        total = Math.max(0, total - 1);
+        countdown.textContent = 'Expires in ' + format(total);
+        if(total === 0){
+          clearInterval(timer);
+          countdown.textContent = 'Code expired';
+          resendBtn.disabled = false;
+        }
+      }, 1000);
+
+      // Expose resend function to global (simple client trigger; server should handle actual resend logic)
+      window.resendOtp = function(){
+        // simple UI feedback; actual resend should be implemented server-side (e.g. /auth/resend-otp)
+        resendBtn.textContent = 'Resending...';
+        resendBtn.disabled = true;
+        fetch('/auth/resend-otp', { method:'POST', credentials:'same-origin' })
+          .then(r=>{
+            if(r.ok){
+              total = 10*60;
+              resendBtn.textContent = 'Resend';
+              // re-enable timer
+              // (existing timer will continue)
+              resendBtn.disabled = true;
+            } else {
+              resendBtn.textContent = 'Try again';
+              resendBtn.disabled = false;
+            }
+          }).catch(()=>{
+            resendBtn.textContent = 'Try again';
+            resendBtn.disabled = false;
+          });
+      };
+
+      window.validateAndSubmit = function(e){
+        const v = otpInput.value.replace(/\D/g,'');
+        if(v.length !== 6){
+          e.preventDefault();
+          otpInput.focus();
+          // simple inline error
+          if(!document.getElementById('inlineError')){
+            const err = document.createElement('div');
+            err.id = 'inlineError';
+            err.className = 'error';
+            err.textContent = 'Please enter the 6-digit code.';
+            otpInput.closest('form').insertBefore(err, otpInput.closest('.inputBox').nextSibling);
+          }
+          return false;
+        }
+        return true;
+      };
+    })();
+  </script>
+</body>
+</html>
