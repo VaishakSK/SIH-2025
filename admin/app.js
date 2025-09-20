@@ -15,7 +15,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images from the uploads folder in admin under /uploads
+// Serve uploaded images from the common uploads directory under /uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Serve images from the images folder under /images
@@ -525,7 +525,7 @@ app.use((req, res) => res.redirect('/admin/home'));
 
 // optional: local Mongo connection
 const mongoURI = process.env.MONGO_URI;
-const port = process.env.ADMIN_PORT || process.env.PORT || 3001;
+const port = process.env.ADMIN_PORT || 3001;
 
 if (!mongoURI) {
     console.warn('MONGO_URI not set. Admin app running without DB connection.');
