@@ -18,6 +18,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded images from the uploads folder in admin under /uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Serve images from the images folder under /images
+app.use('/images', express.static(path.join(__dirname, '../images')));
+
 // Root -> render admin home without changing the URL
 app.get('/', (req, res) => res.render('home'));
 
@@ -52,6 +55,17 @@ app.set('view engine', 'hbs');
 app.set('views', [ path.join(__dirname, 'views') ]);
 
 hbs.registerHelper('eq', function(a, b) { return a === b; });
+hbs.registerHelper('formatDate', function(date) {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+});
 hbs.registerHelper('imageSrc', function(imagePath, imageUrl, photo) {
     try {
         const candidate = String(imagePath || imageUrl || photo || '');

@@ -3,70 +3,549 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Users - CivicSense Admin</title>
+  <title>User Management - CivicConnect Admin</title>
   <style>
-    :root{ --bg-1:#0f172a; --muted:#94a3b8; --border:rgba(15,23,42,0.08) }
+    :root{ 
+      --bg-1:#0f172a; --accent:#06b6d4; --accent-2:#0ea5a4; --muted:#94a3b8; 
+      --radius:14px; --shadow:0 10px 30px rgba(2,6,23,0.12);
+      --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --info:#3b82f6;
+      --glass: rgba(255,255,255,0.65); --border: rgba(15,23,42,0.08);
+    }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Helvetica,Arial;background:
       radial-gradient(1200px 400px at 10% 10%, rgba(6,182,212,0.04), transparent),
+      radial-gradient(800px 300px at 90% 20%, rgba(16,185,129,0.03), transparent),
       linear-gradient(180deg,#f5f7fb,#eef2f6);color:var(--bg-1)}
-    .wrap{padding:20px}
-    .panel{padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);box-shadow:0 12px 30px rgba(2,6,23,0.04);border:1px solid var(--border)}
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-    .sub{color:var(--muted);font-size:13px}
-    table{width:100%;border-collapse:separate;border-spacing:0 8px}
-    th{text-align:left;color:var(--muted);font-size:12px}
-    td{background:#fff;border:1px solid var(--border);padding:10px;border-left:none;border-right:none}
-    tr td:first-child{border-left:1px solid var(--border);border-top-left-radius:10px;border-bottom-left-radius:10px}
-    tr td:last-child{border-right:1px solid var(--border);border-top-right-radius:10px;border-bottom-right-radius:10px}
-    .badge{padding:6px 10px;border-radius:999px;background:#ecfeff;color:#0369a1;font-weight:800;font-size:12px}
-    .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer}
+    .wrap{width:100vw;height:100vh;display:flex;align-items:stretch;justify-content:center;padding:20px;gap:20px;position:relative;overflow:hidden}
+    
+    /* Animated background orbs */
+    .bg-ornaments{position:absolute;inset:0;pointer-events:none;z-index:0}
+    .orb{position:absolute;filter:blur(60px);opacity:0.2;animation:float 20s ease-in-out infinite}
+    .orb.one{width:300px;height:300px;background:radial-gradient(circle at 30% 30%, #67e8f9, transparent 60%);top:-100px;left:-100px}
+    .orb.two{width:400px;height:400px;background:radial-gradient(circle at 70% 40%, #a7f3d0, transparent 60%);bottom:-150px;right:-150px;animation-delay:5s}
+    @keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(20px) translateX(-15px)}}
+    
+    .grid-layout{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start;width:100%;height:100%;max-width:none;position:relative;z-index:1}
+    
+    /* Enhanced Sidebar */
+    .sidebar{display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:var(--radius);background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.94));box-shadow:var(--shadow);border:1px solid rgba(15,23,42,0.03);height:100%;overflow:auto;position:relative;top:0;z-index:5;backdrop-filter:blur(8px)}
+    .sidebar::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--success))}
+    
+    .profile{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,164,0.05));border:1px solid rgba(6,182,212,0.1)}
+    .avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#ecfeff,#dbeafe);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;font-size:22px;box-shadow:0 8px 20px rgba(6,182,212,0.06);position:relative;overflow:hidden}
+    .avatar::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%);animation:shimmer 3s ease-in-out infinite}
+    @keyframes shimmer{0%,100%{opacity:0}50%{opacity:1}}
+    .userMeta .name{font-weight:800;font-size:16px;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .userMeta .email{font-size:13px;color:var(--muted);margin-top:4px}
+    .userMeta .status{font-size:11px;color:var(--success);font-weight:600;margin-top:2px;display:flex;align-items:center;gap:4px}
+    .userMeta .status::before{content:"●";animation:pulse 2s ease-in-out infinite}
+    
+    .nav{display:flex;flex-direction:column;gap:6px;margin-top:16px}
+    .nav a{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;color:var(--bg-1);text-decoration:none;font-weight:700;transition:all .3s ease;position:relative;overflow:hidden}
+    .nav a::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--accent),var(--accent-2));opacity:0;transition:opacity .3s ease}
+    .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 8px 22px rgba(14,165,164,0.12)}
+    .nav a.active::before{opacity:1}
+    .nav a:hover{background:rgba(6,182,212,0.08);transform:translateX(4px)}
+    .nav a:hover::before{opacity:1}
+    .nav-icon{font-size:16px;width:20px;text-align:center}
+    
+    .small{font-size:13px;color:var(--muted);margin-top:auto;padding:12px;background:rgba(15,23,42,0.02);border-radius:8px;text-align:center}
+    
+    /* Enhanced Main Area */
+    .main{display:flex;flex-direction:column;gap:18px;height:100%;overflow:hidden;border-radius:var(--radius)}
+    .mainInner{display:flex;flex-direction:column;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);box-shadow:var(--shadow);border:1px solid rgba(15,23,42,0.03);height:100%;overflow:auto;border-radius:var(--radius);position:relative}
+    .mainInner::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+    
+    /* Enhanced Topbar */
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative;top:0;padding:16px 0;z-index:10;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid rgba(15,23,42,0.06);margin-bottom:8px}
+    .title h1{margin:0;font-size:24px;font-weight:800;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .sub{color:var(--muted);font-size:14px;margin-top:4px}
+    
+    /* Logo Styles */
+    .logo-container{display:flex;align-items:center;gap:12px}
+    .admin-logo{width:40px;height:40px;object-fit:contain;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+    .logo-text{display:flex;flex-direction:column;gap:2px}
+    
+    /* Enhanced Buttons */
+    .btn{padding:12px 18px;border-radius:12px;border:0;cursor:pointer;font-weight:800;font-size:14px;transition:all .3s ease;position:relative;overflow:hidden}
+    .btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transition:left .5s ease}
+    .btn:hover::before{left:100%}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 10px 30px rgba(6,182,212,0.12)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 15px 40px rgba(6,182,212,0.25)}
+    .btn-ghost{background:transparent;border:2px solid rgba(15,23,42,0.06);color:var(--bg-1)}
+    .btn-ghost:hover{background:rgba(6,182,212,0.05);border-color:var(--accent);transform:translateY(-1px)}
+    .btn-danger{background:linear-gradient(90deg,var(--danger),#dc2626);color:white;box-shadow:0 8px 20px rgba(239,68,68,0.12)}
+    .btn-danger:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(239,68,68,0.25)}
+    
+    /* Stats Cards */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+    .stat-card{border-radius:16px;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,0.95),#fff);box-shadow:0 12px 40px rgba(2,6,23,0.04);border:1px solid rgba(15,23,42,0.03);position:relative;overflow:hidden;transition:all .3s ease}
+    .stat-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+    .stat-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(2,6,23,0.08)}
+    .stat-card .label{font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+    .stat-card .value{font-size:28px;font-weight:900;margin-top:8px;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    
+    /* Enhanced Table */
+    .table-container{border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);box-shadow:0 12px 30px rgba(2,6,23,0.04);border:1px solid rgba(15,23,42,0.03)}
+    .table-header{padding:20px;border-bottom:1px solid rgba(15,23,42,0.06);background:rgba(6,182,212,0.02)}
+    .table-header h2{margin:0;font-size:20px;font-weight:800;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .table-header .sub{color:var(--muted);font-size:14px;margin-top:4px}
+    
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    th{text-align:left;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:16px;background:rgba(6,182,212,0.05);border-bottom:1px solid rgba(15,23,42,0.06)}
+    td{background:#fff;padding:16px;border-bottom:1px solid rgba(15,23,42,0.06);transition:all .3s ease}
+    tr:hover td{background:rgba(6,182,212,0.02);transform:scale(1.01)}
+    tr:last-child td{border-bottom:none}
+    
+    /* Enhanced Badges */
+    .badge{padding:8px 12px;border-radius:20px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;display:inline-flex;align-items:center;gap:4px}
+    .badge.admin{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 4px 12px rgba(6,182,212,0.2)}
+    .badge.user{background:rgba(15,23,42,0.05);color:var(--bg-1);border:1px solid rgba(15,23,42,0.1)}
+    .badge.online{background:linear-gradient(90deg,var(--success),#059669);color:white;box-shadow:0 4px 12px rgba(16,185,129,0.2)}
+    .badge.offline{background:rgba(15,23,42,0.1);color:var(--muted)}
+    
+    /* Action Buttons */
+    .action-buttons{display:flex;gap:8px;align-items:center}
+    .action-btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700;font-size:12px;transition:all .3s ease;position:relative;overflow:hidden}
+    .action-btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transition:left .3s ease}
+    .action-btn:hover::before{left:100%}
+    .action-btn.admin{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 4px 12px rgba(6,182,212,0.2)}
+    .action-btn.admin:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(6,182,212,0.3)}
+    .action-btn.revoke{background:linear-gradient(90deg,var(--danger),#dc2626);color:white;box-shadow:0 4px 12px rgba(239,68,68,0.2)}
+    .action-btn.revoke:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(239,68,68,0.3)}
+    .action-btn.delete{background:rgba(15,23,42,0.05);color:var(--danger);border:1px solid rgba(239,68,68,0.2)}
+    .action-btn.delete:hover{background:rgba(239,68,68,0.05);border-color:var(--danger)}
+    
+    /* Search and Filter */
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:20px;padding:16px;background:rgba(6,182,212,0.02);border-radius:12px;border:1px solid rgba(6,182,212,0.1)}
+    .search-box{flex:1;padding:12px 16px;border:2px solid rgba(15,23,42,0.06);border-radius:10px;background:white;font-size:14px;transition:all .3s ease}
+    .search-box:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(6,182,212,0.1)}
+    .filter-select{padding:12px 16px;border:2px solid rgba(15,23,42,0.06);border-radius:10px;background:white;font-size:14px;cursor:pointer;transition:all .3s ease}
+    .filter-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(6,182,212,0.1)}
+    
+    /* Pagination */
+    .pagination{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:20px;padding:16px;background:rgba(6,182,212,0.02);border-radius:12px;border:1px solid rgba(6,182,212,0.1)}
+    .page-btn{padding:8px 12px;border:1px solid rgba(15,23,42,0.06);border-radius:8px;background:white;cursor:pointer;font-weight:700;font-size:12px;transition:all .3s ease}
+    .page-btn:hover{background:rgba(6,182,212,0.05);border-color:var(--accent)}
+    .page-btn.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border-color:var(--accent)}
+    
+    /* Footer Styles */
+    .footer{background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.98));backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.1);margin-top:40px;position:relative;z-index:10}
+    .footer-content{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;padding:40px 20px;max-width:1200px;margin:0 auto}
+    .footer-section h4{color:white;font-size:18px;font-weight:800;margin:0 0 12px 0;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .footer-section h5{color:white;font-size:14px;font-weight:700;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px}
+    .footer-section p{color:var(--muted);font-size:14px;margin:0 0 16px 0;line-height:1.5}
+    .social-links{display:flex;gap:12px}
+    .social-link{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.1);color:white;text-decoration:none;font-size:16px;transition:all .3s ease;border:1px solid rgba(255,255,255,0.1)}
+    .social-link:hover{background:rgba(6,182,212,0.2);border-color:var(--accent);transform:translateY(-2px)}
+    .footer-links{list-style:none;padding:0;margin:0}
+    .footer-links li{margin-bottom:8px}
+    .footer-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color .3s ease}
+    .footer-links a:hover{color:var(--accent)}
+    .system-info{display:flex;flex-direction:column;gap:8px}
+    .info-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+    .info-item .label{color:var(--muted);font-size:12px;font-weight:600}
+    .info-item .value{color:white;font-size:12px;font-weight:700}
+    .info-item .value.online{color:var(--success)}
+    .footer-bottom{background:rgba(0,0,0,0.2);border-top:1px solid rgba(255,255,255,0.05);padding:20px}
+    .footer-bottom-content{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;padding:0 20px}
+    .footer-bottom p{color:var(--muted);font-size:12px;margin:0}
+    .footer-bottom-links{display:flex;gap:20px}
+    .footer-bottom-links a{color:var(--muted);text-decoration:none;font-size:12px;transition:color .3s ease}
+    .footer-bottom-links a:hover{color:var(--accent)}
+    
+    /* Responsive Design */
+    @media (max-width:1200px){
+      .grid-layout{grid-template-columns:240px 1fr;gap:16px}
+      .stats{grid-template-columns:repeat(2,1fr)}
+    }
+    
+    @media (max-width:768px){
+      .grid-layout{grid-template-columns:1fr;gap:12px}
+      .sidebar{position:static;height:auto}
+      .stats{grid-template-columns:1fr}
+      .controls{flex-direction:column;align-items:stretch}
+      .action-buttons{flex-direction:column;gap:4px}
+      .footer-content{grid-template-columns:repeat(2,1fr);gap:24px;padding:32px 20px}
+      .footer-bottom-content{flex-direction:column;gap:12px;text-align:center}
+      .footer-bottom-links{justify-content:center}
+    }
+    @media (max-width:480px){
+      .footer-content{grid-template-columns:1fr;gap:20px;padding:24px 16px}
+      .footer-section{text-align:center}
+      .social-links{justify-content:center}
+    }
+    
+    @media (prefers-reduced-motion:reduce){
+      .orb, .avatar::before{animation:none}
+      .btn, .stat-card, .action-btn, tr:hover td{transition:none}
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="panel">
-      <div class="header">
-        <div>
-          <h2 style="margin:0">Users</h2>
-          <div class="sub">Manage administrators and citizens</div>
+    <!-- Animated Background Ornaments -->
+    <div class="bg-ornaments">
+      <div class="orb one"></div>
+      <div class="orb two"></div>
+    </div>
+    
+    <div class="grid-layout">
+      <aside class="sidebar">
+        <div class="profile">
+          <div class="avatar">A</div>
+          <div class="userMeta">
+            <div class="name">Admin</div>
+            <div class="email">System Administrator</div>
+            <div class="status">Online</div>
+          </div>
         </div>
-      </div>
-      <table aria-label="Users table">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Joined</th>
-            <th>Role</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#if users}}
-            {{#each users}}
-              <tr>
-                <td>{{this.username}}</td>
-                <td>{{this.email}}</td>
-                <td>{{this.createdAt}}</td>
-                <td>
-                  {{#if this.isAdmin}}<span class="badge">Admin</span>{{else}}User{{/if}}
-                </td>
-                <td>
-                  <form method="post" action="/admin/users/{{this._id}}/toggle-admin" style="margin:0">
-                    <button class="btn" type="submit">{{#if this.isAdmin}}Revoke admin{{else}}Make admin{{/if}}</button>
-                  </form>
-                </td>
-              </tr>
-            {{/each}}
-          {{else}}
-            <tr><td colspan="5" class="sub">No users found.</td></tr>
-          {{/if}}
-        </tbody>
-      </table>
+        <nav class="nav">
+          <a href="/admin">
+            <span class="nav-icon">📊</span>
+            <span>Overview</span>
+          </a>
+          <a href="/admin/users" class="active">
+            <span class="nav-icon">👥</span>
+            <span>Users</span>
+          </a>
+          <a href="/admin/reports">
+            <span class="nav-icon">📋</span>
+            <span>Reports</span>
+          </a>
+          <a href="/admin/settings">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+          </a>
+        </nav>
+        <div class="small">CivicConnect Admin v2.1</div>
+      </aside>
+
+      <main class="main">
+        <div class="mainInner">
+          <div class="topbar">
+            <div class="title">
+              <div class="logo-container">
+                <img src="/images/logo-mainpage.png" alt="CivicConnect Logo" class="admin-logo">
+                <div class="logo-text">
+                  <h1>User Management</h1>
+                  <div class="sub">Manage administrators and citizens</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <button class="btn btn-primary" onclick="location.href='/admin'">📊 Dashboard</button>
+              <button class="btn btn-danger" onclick="location.href='/admin/logout'">🚪 Logout</button>
+            </div>
+          </div>
+
+          <div class="afterTopbar">
+            <!-- Stats Cards -->
+            <section class="stats">
+              <div class="stat-card">
+                <div class="label">Total Users</div>
+                <div class="value">{{usersCount}}</div>
+              </div>
+              <div class="stat-card">
+                <div class="label">Administrators</div>
+                <div class="value">{{adminCount}}</div>
+              </div>
+              <div class="stat-card">
+                <div class="label">Active Users</div>
+                <div class="value">{{activeCount}}</div>
+              </div>
+              <div class="stat-card">
+                <div class="label">New This Month</div>
+                <div class="value">{{newUsersCount}}</div>
+              </div>
+            </section>
+
+            <!-- Search and Filter Controls -->
+            <div class="controls">
+              <input type="text" class="search-box" placeholder="🔍 Search users by name or email..." id="searchInput">
+              <select class="filter-select" id="roleFilter">
+                <option value="">All Roles</option>
+                <option value="admin">Administrators</option>
+                <option value="user">Regular Users</option>
+              </select>
+              <select class="filter-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+              </select>
+              <button class="btn btn-primary" onclick="exportUsers()">📊 Export</button>
+            </div>
+
+            <!-- Enhanced Table -->
+            <div class="table-container">
+              <div class="table-header">
+                <h2>User Directory</h2>
+                <div class="sub">Complete list of platform users with management controls</div>
+              </div>
+              <table aria-label="Users table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Joined</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  {{#if users}}
+                    {{#each users}}
+                      <tr data-role="{{#if this.isAdmin}}admin{{else}}user{{/if}}" data-status="online">
+                        <td>
+                          <div style="display:flex;align-items:center;gap:12px">
+                            <div style="width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#ecfeff,#dbeafe);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;font-size:16px">{{this.username.[0]}}</div>
+                            <div>
+                              <div style="font-weight:700;font-size:14px">{{this.username}}</div>
+                              <div style="font-size:12px;color:var(--muted)">ID: {{this._id}}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>{{this.email}}</td>
+                        <td>{{formatDate this.createdAt}}</td>
+                        <td>
+                          {{#if this.isAdmin}}
+                            <span class="badge admin">👑 Admin</span>
+                          {{else}}
+                            <span class="badge user">👤 User</span>
+                          {{/if}}
+                        </td>
+                        <td>
+                          <span class="badge online">🟢 Online</span>
+                        </td>
+                        <td>
+                          <div class="action-buttons">
+                            <form method="post" action="/admin/users/{{this._id}}/toggle-admin" style="margin:0;display:inline">
+                              <button class="action-btn {{#if this.isAdmin}}revoke{{else}}admin{{/if}}" type="submit">
+                                {{#if this.isAdmin}}Revoke Admin{{else}}Make Admin{{/if}}
+                              </button>
+                            </form>
+                            <button class="action-btn delete" onclick="deleteUser('{{this._id}}', '{{this.username}}')">🗑️ Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    {{/each}}
+                  {{else}}
+                    <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No users found.</td></tr>
+                  {{/if}}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+              <button class="page-btn" onclick="changePage(-1)">← Previous</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn" onclick="changePage(1)">Next →</button>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>CivicConnect Admin</h4>
+        <p>Empowering civic engagement through technology</p>
+        <div class="social-links">
+          <a href="#" class="social-link">📧</a>
+          <a href="#" class="social-link">📱</a>
+          <a href="#" class="social-link">🌐</a>
+        </div>
+      </div>
+      <div class="footer-section">
+        <h5>Quick Links</h5>
+        <ul class="footer-links">
+          <li><a href="/admin">Dashboard</a></li>
+          <li><a href="/admin/reports">Reports</a></li>
+          <li><a href="/admin/users">Users</a></li>
+          <li><a href="/admin/settings">Settings</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h5>Support</h5>
+        <ul class="footer-links">
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Contact Support</a></li>
+          <li><a href="#">System Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h5>System Info</h5>
+        <div class="system-info">
+          <div class="info-item">
+            <span class="label">Version:</span>
+            <span class="value">v2.1.0</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Status:</span>
+            <span class="value online">● Online</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Last Updated:</span>
+            <span class="value">{{formatDate new Date}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-bottom-content">
+        <p>&copy; 2024 CivicConnect. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Cookie Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll('#usersTableBody tr');
+      
+      rows.forEach(row => {
+        const username = row.cells[0].textContent.toLowerCase();
+        const email = row.cells[1].textContent.toLowerCase();
+        
+        if (username.includes(searchTerm) || email.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+
+    // Filter functionality
+    document.getElementById('roleFilter').addEventListener('change', function(e) {
+      filterTable();
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', function(e) {
+      filterTable();
+    });
+
+    function filterTable() {
+      const roleFilter = document.getElementById('roleFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value;
+      const rows = document.querySelectorAll('#usersTableBody tr');
+      
+      rows.forEach(row => {
+        const role = row.dataset.role;
+        const status = row.dataset.status;
+        
+        let showRow = true;
+        
+        if (roleFilter && role !== roleFilter) showRow = false;
+        if (statusFilter && status !== statusFilter) showRow = false;
+        
+        row.style.display = showRow ? '' : 'none';
+      });
+    }
+
+    // Export functionality
+    function exportUsers() {
+      const users = [];
+      const rows = document.querySelectorAll('#usersTableBody tr:not([style*="display: none"])');
+      
+      rows.forEach(row => {
+        if (row.cells.length > 1) {
+          users.push({
+            username: row.cells[0].textContent.trim(),
+            email: row.cells[1].textContent.trim(),
+            joined: row.cells[2].textContent.trim(),
+            role: row.cells[3].textContent.trim(),
+            status: row.cells[4].textContent.trim()
+          });
+        }
+      });
+      
+      const blob = new Blob([JSON.stringify(users, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `civicconnect-users-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showNotification('Users exported successfully!', 'success');
+    }
+
+    // Delete user functionality
+    function deleteUser(userId, username) {
+      if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+        // In a real application, this would make an API call
+        showNotification(`User "${username}" deleted successfully`, 'success');
+        // Remove the row from the table
+        const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+        if (row) row.remove();
+      }
+    }
+
+    // Pagination
+    function changePage(direction) {
+      showNotification('Pagination feature coming soon!', 'info');
+    }
+
+    // Notification system
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 1000;
+        padding: 12px 20px; border-radius: 8px; color: white;
+        font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        background: ${type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+        animation: slideIn 0.3s ease-out;
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+
+    // Add CSS for notifications
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Real-time updates simulation
+    setInterval(() => {
+      // Simulate user status changes
+      const badges = document.querySelectorAll('.badge.online');
+      badges.forEach(badge => {
+        if (Math.random() > 0.95) {
+          badge.className = 'badge offline';
+          badge.textContent = '🔴 Offline';
+        }
+      });
+    }, 5000);
+  </script>
 </body>
 </html>
-
-

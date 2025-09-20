@@ -4,62 +4,126 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CivicSense Admin - City Operations Command</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    :root{ --bg-1:#0f172a; --accent:#06b6d4; --accent-2:#0ea5a4; --muted:#94a3b8; --radius:14px; --shadow:0 10px 30px rgba(2,6,23,0.12); --glass: rgba(255,255,255,0.65); --border: rgba(15,23,42,0.08)}
+    :root{ 
+      --bg-1:#0f172a; --accent:#06b6d4; --accent-2:#0ea5a4; --muted:#94a3b8; 
+      --radius:14px; --shadow:0 10px 30px rgba(2,6,23,0.12); 
+      --glass: rgba(255,255,255,0.65); --border: rgba(15,23,42,0.08);
+      --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --info:#3b82f6;
+    }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Helvetica,Arial;background:
       radial-gradient(1200px 400px at 10% 10%, rgba(6,182,212,0.05), transparent),
       radial-gradient(1000px 380px at 90% 0%, rgba(14,165,164,0.05), transparent),
+      radial-gradient(800px 300px at 50% 50%, rgba(16,185,129,0.03), transparent),
       linear-gradient(180deg,#f5f7fb,#eef2f6);color:var(--bg-1)}
     .wrap{min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
-    /* animated gradient orbs */
+    
+    /* Enhanced animated gradient orbs */
     .ornaments{position:absolute;inset:0;pointer-events:none;}
     .orb{position:absolute;filter:blur(60px);opacity:0.35;animation:float 18s ease-in-out infinite}
     .orb.one{width:420px;height:420px;background:radial-gradient(circle at 30% 30%, #67e8f9, transparent 60%);top:-120px;left:-120px}
     .orb.two{width:520px;height:520px;background:radial-gradient(circle at 70% 40%, #a7f3d0, transparent 60%);bottom:-160px;right:-160px;animation-delay:4s}
+    .orb.three{width:380px;height:380px;background:radial-gradient(circle at 50% 50%, #fbbf24, transparent 60%);top:50%;left:50%;transform:translate(-50%, -50%);animation-delay:8s}
     @keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(18px) translateX(-10px)}}
 
-    .nav{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:linear-gradient(180deg,rgba(255,255,255,0.9),#fff);backdrop-filter:saturate(140%) blur(6px);box-shadow:var(--shadow);border-bottom:1px solid var(--border)}
-    .brand{font-weight:900}
+    .nav{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:linear-gradient(180deg,rgba(255,255,255,0.9),#fff);backdrop-filter:saturate(140%) blur(6px);box-shadow:var(--shadow);border-bottom:1px solid var(--border);position:relative;z-index:10}
+    .brand{font-weight:900;font-size:20px;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .links{display:flex;gap:12px}
-    .links a{padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--bg-1);font-weight:700;transition:transform .15s ease, box-shadow .2s ease}
+    .links a{padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--bg-1);font-weight:700;transition:all .3s ease;position:relative;overflow:hidden}
     .links a.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 10px 30px rgba(6,182,212,0.12)}
-    .links a:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(2,6,23,0.08)}
+    .links a:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(2,6,23,0.08)}
+    .links a.primary:hover{box-shadow:0 15px 35px rgba(6,182,212,0.25)}
 
-    .hero{max-width:1200px;margin:32px auto 0 auto;padding:24px;background:
+    .hero{max-width:1200px;margin:32px auto 0 auto;padding:32px;background:
       linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.86));
-      border-radius:22px;box-shadow:0 30px 60px rgba(2,6,23,0.10);border:1px solid var(--border);backdrop-filter: blur(4px)}
-    .hero h1{margin:0 0 8px 0;font-size:34px}
-    .hero .sub{color:var(--muted)}
+      border-radius:22px;box-shadow:0 30px 60px rgba(2,6,23,0.10);border:1px solid var(--border);backdrop-filter: blur(4px);position:relative;overflow:hidden}
+    .hero::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--success))}
+    .hero h1{margin:0 0 8px 0;font-size:38px;font-weight:800;line-height:1.2}
+    .hero .sub{color:var(--muted);font-size:18px;margin-bottom:24px}
+    
+    /* Home Logo Styles */
+    .hero-header{display:flex;align-items:center;gap:20px;margin-bottom:24px}
+    .home-logo{width:60px;height:60px;object-fit:contain;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.1);flex-shrink:0}
+    .hero-text{display:flex;flex-direction:column;gap:8px;flex:1}
     .cta{display:flex;gap:12px;margin-top:16px}
-    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:800}
+    .btn{padding:12px 20px;border-radius:12px;border:0;cursor:pointer;font-weight:800;font-size:16px;transition:all .3s ease;position:relative;overflow:hidden}
     .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 10px 30px rgba(6,182,212,0.18)}
-    .btn-ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:var(--bg-1)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 15px 40px rgba(6,182,212,0.3)}
+    .btn-ghost{background:transparent;border:2px solid rgba(15,23,42,0.06);color:var(--bg-1)}
+    .btn-ghost:hover{background:rgba(6,182,212,0.05);border-color:var(--accent)}
 
-    .kpis{max-width:1200px;margin:16px auto;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-    .kpi{padding:18px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,0.9),#fff);box-shadow:0 20px 50px rgba(2,6,23,0.07);border:1px solid var(--border);position:relative;overflow:hidden}
+    .kpis{max-width:1200px;margin:24px auto;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .kpi{padding:24px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,0.9),#fff);box-shadow:0 20px 50px rgba(2,6,23,0.07);border:1px solid var(--border);position:relative;overflow:hidden;transition:all .3s ease}
     .kpi::after{content:"";position:absolute;inset:auto -20% -40% -20%;height:60%;background:radial-gradient(120px 40px at 50% 0%, rgba(6,182,212,0.18), transparent);filter:blur(20px)}
-    .kpi .label{font-size:12px;color:var(--muted);letter-spacing:.2px;text-transform:uppercase}
-    .kpi .value{font-size:28px;font-weight:900;margin-top:6px}
-    .kpi:hover{transform:translateY(-2px);transition:transform .2s ease, box-shadow .2s ease;box-shadow:0 26px 60px rgba(2,6,23,0.12)}
+    .kpi .label{font-size:12px;color:var(--muted);letter-spacing:.2px;text-transform:uppercase;font-weight:600}
+    .kpi .value{font-size:32px;font-weight:900;margin-top:8px;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .kpi .trend{font-size:12px;margin-top:4px;font-weight:600}
+    .kpi .trend.up{color:var(--success)}
+    .kpi .trend.down{color:var(--danger)}
+    .kpi:hover{transform:translateY(-4px);box-shadow:0 30px 70px rgba(2,6,23,0.15)}
 
-    .sections{max-width:1200px;margin:0 auto 40px auto;display:grid;grid-template-columns:2fr 1fr;gap:16px}
-    .panel{padding:16px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,0.9),#fff);box-shadow:0 20px 50px rgba(2,6,23,0.07);border:1px solid var(--border)}
-    .panel h3{margin:0 0 8px 0}
-    .features{display:grid;grid-template-columns:1fr;gap:10px}
-    .feature{padding:12px;border-radius:12px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,0.95),transparent);transition:transform .2s ease, box-shadow .2s ease}
-    .feature:hover{transform:translateY(-2px);box-shadow:0 18px 40px rgba(2,6,23,0.08)}
-    .muted{color:var(--muted)}
+    .sections{max-width:1200px;margin:0 auto 40px auto;display:grid;grid-template-columns:2fr 1fr;gap:20px}
+    .panel{padding:24px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,0.9),#fff);box-shadow:0 20px 50px rgba(2,6,23,0.07);border:1px solid var(--border);position:relative;overflow:hidden}
+    .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+    .panel h3{margin:0 0 16px 0;font-size:20px;font-weight:700;color:var(--bg-1)}
+    .features{display:grid;grid-template-columns:1fr;gap:12px}
+    .feature{padding:16px;border-radius:14px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,0.95),transparent);transition:all .3s ease;position:relative;overflow:hidden}
+    .feature::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--accent),var(--accent-2));opacity:0;transition:opacity .3s ease}
+    .feature:hover{transform:translateY(-3px);box-shadow:0 20px 45px rgba(2,6,23,0.1);border-color:var(--accent)}
+    .feature:hover::before{opacity:1}
+    .feature strong{display:block;margin-bottom:4px;font-weight:700;color:var(--bg-1)}
+    .muted{color:var(--muted);font-size:14px;line-height:1.4}
+
+    /* Map container */
+    .map-container{height:450px;border-radius:14px;overflow:hidden;position:relative;background:linear-gradient(135deg,#f0f9ff,#e0f2fe)}
+    .map-container::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg,transparent 48%,rgba(6,182,212,0.1) 49%,rgba(6,182,212,0.1) 51%,transparent 52%);animation:shimmer 3s ease-in-out infinite}
+    @keyframes shimmer{0%,100%{opacity:0.3}50%{opacity:0.7}}
+
+    /* Incident markers */
+    .incident-marker{position:absolute;z-index:1000;font-size:20px;animation:pulse 2s ease-in-out infinite;cursor:pointer;transition:transform .3s ease}
+    .incident-marker:hover{transform:scale(1.2)}
+    @keyframes pulse{0%,100%{opacity:0.8}50%{opacity:1}}
+
+    /* Legend */
+    .legend{background:rgba(255,255,255,0.95);padding:16px 20px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.15);display:flex;gap:20px;flex-wrap:wrap;justify-content:center;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);margin-top:16px}
+    .legend-item{display:flex;align-items:center;gap:10px;margin-bottom:0;font-size:14px;font-weight:600;color:var(--bg-1)}
+    .legend-item:last-child{margin-bottom:0}
+    .legend-item span{font-size:18px}
+
+    /* Stats cards */
+    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;position:relative;z-index:1}
+    .stat-card{padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,0.8),rgba(255,255,255,0.4));border:1px solid var(--border);text-align:center;position:relative;z-index:1}
+    .stat-card .number{font-size:18px;font-weight:700;color:var(--accent)}
+    .stat-card .label{font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:2px}
 
     /* decorative grid overlay */
     .grid-overlay{position:absolute;inset:0;background-image: linear-gradient(rgba(2,6,23,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(2,6,23,0.04) 1px, transparent 1px);background-size: 26px 26px;mask-image: radial-gradient(80% 60% at 50% 0%, black, transparent 70%);pointer-events:none}
 
     @media (prefers-reduced-motion:reduce){
-      .orb{animation:none}
+      .orb, .incident-marker{animation:none}
       .links a, .kpi, .feature{transition:none}
     }
 
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    @media (max-width:900px){
+      .sections{grid-template-columns:1fr}
+      .kpis{grid-template-columns:repeat(2,1fr)}
+      .stats-grid{grid-template-columns:1fr}
+      .map-container{height:400px}
+      .hero-header{flex-direction:column;text-align:center;gap:16px}
+      .home-logo{width:50px;height:50px}
+    }
+    
+    @media (max-width:600px){
+      .legend{flex-direction:column;gap:8px;align-items:center;margin-top:12px}
+      .legend-item{font-size:12px}
+      .legend-item span{font-size:16px}
+      .map-container{height:350px}
+      .hero-header{flex-direction:column;text-align:center;gap:12px}
+      .home-logo{width:45px;height:45px}
+      .hero h1{font-size:32px}
+    }
   </style>
   </head>
 <body>
@@ -67,6 +131,7 @@
     <div class="ornaments" aria-hidden="true">
       <div class="orb one"></div>
       <div class="orb two"></div>
+      <div class="orb three"></div>
       <div class="grid-overlay"></div>
     </div>
     <nav class="nav">
@@ -76,37 +141,196 @@
       </div>
     </nav>
     <main class="hero">
-      <h1>City Operations Command for CivicSense</h1>
-      <div class="sub">One pane of glass for incidents, service levels, and citizen satisfaction.</div>
-      
+      <div class="hero-header">
+        <img src="/images/logo-mainpage.png" alt="CivicConnect Logo" class="home-logo">
+        <div class="hero-text">
+          <h1>City Operations Command for CivicSense</h1>
+          <div class="sub">One pane of glass for incidents, service levels, and citizen satisfaction across India.</div>
+        </div>
+      </div>
+      <div class="cta">
+        <button class="btn btn-primary" onclick="window.location.href='/admin/login'">Access Dashboard</button>
+        <button class="btn btn-ghost" onclick="scrollToMap()">View Live Map</button>
+      </div>
     </main>
 
     <section class="kpis" aria-label="Key performance indicators">
-      <div class="kpi"><div class="label">Active Incidents</div><div class="value">128</div></div>
-      <div class="kpi"><div class="label">Avg. Response Time</div><div class="value">3h 12m</div></div>
-      <div class="kpi"><div class="label">SLA Compliance</div><div class="value">92%</div></div>
-      <div class="kpi"><div class="label">Citizen Satisfaction</div><div class="value">4.3/5</div></div>
+      <div class="kpi">
+        <div class="label">Active Incidents</div>
+        <div class="value">128</div>
+        <div class="trend up">↗ +12% from yesterday</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Avg. Response Time</div>
+        <div class="value">3h 12m</div>
+        <div class="trend down">↘ -8% improvement</div>
+      </div>
+      <div class="kpi">
+        <div class="label">SLA Compliance</div>
+        <div class="value">92%</div>
+        <div class="trend up">↗ +3% this week</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Citizen Satisfaction</div>
+        <div class="value">4.3/5</div>
+        <div class="trend up">↗ +0.2 this month</div>
+      </div>
     </section>
 
     <section class="sections">
       <div class="panel">
-        <h3>Live Incidents Map</h3>
-        <div class="muted">Embed your GIS/Map provider here to visualize complaints and city assets.</div>
-        <div style="margin-top:10px;height:280px;border-radius:12px;background:repeating-linear-gradient(45deg,#f0f9ff,#f0f9ff 10px,#e2e8f0 10px,#e2e8f0 20px);"></div>
+        <h3>Live Incidents Map - India</h3>
+        <div class="muted">Real-time visualization of civic issues across Indian cities and states.</div>
+        <div class="map-container" id="map">
+          <!-- Map will be rendered here -->
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span>🚧</span> Road Issues</div>
+          <div class="legend-item"><span>💧</span> Water Problems</div>
+          <div class="legend-item"><span>⚡</span> Power Outages</div>
+          <div class="legend-item"><span>🗑️</span> Sanitation</div>
+          <div class="legend-item"><span>🏗️</span> Infrastructure</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="number">47</div>
+            <div class="label">Mumbai</div>
+          </div>
+          <div class="stat-card">
+            <div class="number">32</div>
+            <div class="label">Delhi</div>
+          </div>
+          <div class="stat-card">
+            <div class="number">28</div>
+            <div class="label">Bangalore</div>
+          </div>
+        </div>
       </div>
       <div class="panel">
         <h3>Must-have modules</h3>
         <div class="features">
-          <div class="feature"><strong>Incident Intake & Triage</strong><div class="muted">Multi-channel capture, deduplication, prioritization.</div></div>
-          <div class="feature"><strong>Work Orders & Routing</strong><div class="muted">Assign to departments, track field crew progress.</div></div>
-          <div class="feature"><strong>SLA & Escalations</strong><div class="muted">Auto-escalate breaching tickets, SLA dashboards.</div></div>
-          <div class="feature"><strong>Citizen Communication</strong><div class="muted">Status updates, OTP verification, feedback surveys.</div></div>
-          <div class="feature"><strong>Analytics & Heatmaps</strong><div class="muted">Identify hotspots, seasonal trends, repeat offenders.</div></div>
-          <div class="feature"><strong>Integrations</strong><div class="muted">Email/SMS gateways, GIS, 311/helpline, IVR, WhatsApp.</div></div>
-          <div class="feature"><strong>Audit & Governance</strong><div class="muted">Role-based access, logs, data retention policies.</div></div>
+          <div class="feature">
+            <strong>Incident Intake & Triage</strong>
+            <div class="muted">Multi-channel capture, deduplication, prioritization.</div>
+          </div>
+          <div class="feature">
+            <strong>Work Orders & Routing</strong>
+            <div class="muted">Assign to departments, track field crew progress.</div>
+          </div>
+          <div class="feature">
+            <strong>SLA & Escalations</strong>
+            <div class="muted">Auto-escalate breaching tickets, SLA dashboards.</div>
+          </div>
+          <div class="feature">
+            <strong>Citizen Communication</strong>
+            <div class="muted">Status updates, OTP verification, feedback surveys.</div>
+          </div>
+          <div class="feature">
+            <strong>Analytics & Heatmaps</strong>
+            <div class="muted">Identify hotspots, seasonal trends, repeat offenders.</div>
+          </div>
+          <div class="feature">
+            <strong>Integrations</strong>
+            <div class="muted">Email/SMS gateways, GIS, 311/helpline, IVR, WhatsApp.</div>
+          </div>
+          <div class="feature">
+            <strong>Audit & Governance</strong>
+            <div class="muted">Role-based access, logs, data retention policies.</div>
+          </div>
         </div>
       </div>
     </section>
   </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Initialize map when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      initMap();
+    });
+
+    function initMap() {
+      // Initialize Leaflet map centered on India
+      const map = L.map('map').setView([20.5937, 78.9629], 5);
+      
+      // Add OpenStreetMap tiles (free service)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(map);
+
+      // Sample incident data for Indian cities
+      const incidents = [
+        { lat: 19.0760, lng: 72.8777, type: 'road', emoji: '🚧', city: 'Mumbai', count: 12 },
+        { lat: 28.7041, lng: 77.1025, type: 'water', emoji: '💧', city: 'Delhi', count: 8 },
+        { lat: 12.9716, lng: 77.5946, type: 'power', emoji: '⚡', city: 'Bangalore', count: 15 },
+        { lat: 22.5726, lng: 88.3639, type: 'sanitation', emoji: '🗑️', city: 'Kolkata', count: 6 },
+        { lat: 13.0827, lng: 80.2707, type: 'infrastructure', emoji: '🏗️', city: 'Chennai', count: 9 },
+        { lat: 18.5204, lng: 73.8567, type: 'road', emoji: '🚧', city: 'Pune', count: 7 },
+        { lat: 26.9124, lng: 75.7873, type: 'water', emoji: '💧', city: 'Jaipur', count: 5 },
+        { lat: 17.3850, lng: 78.4867, type: 'power', emoji: '⚡', city: 'Hyderabad', count: 11 },
+        { lat: 23.0225, lng: 72.5714, type: 'sanitation', emoji: '🗑️', city: 'Ahmedabad', count: 4 },
+        { lat: 30.7333, lng: 76.7794, type: 'infrastructure', emoji: '🏗️', city: 'Chandigarh', count: 3 },
+        { lat: 25.3176, lng: 82.9739, type: 'road', emoji: '🚧', city: 'Varanasi', count: 8 },
+        { lat: 15.2993, lng: 74.1240, type: 'water', emoji: '💧', city: 'Goa', count: 2 },
+        { lat: 31.1048, lng: 77.1734, type: 'power', emoji: '⚡', city: 'Shimla', count: 1 },
+        { lat: 11.2588, lng: 75.7804, type: 'sanitation', emoji: '🗑️', city: 'Kochi', count: 6 },
+        { lat: 27.0238, lng: 74.2179, type: 'infrastructure', emoji: '🏗️', city: 'Jodhpur', count: 4 }
+      ];
+
+      // Add incident markers to map
+      incidents.forEach(incident => {
+        const marker = L.marker([incident.lat, incident.lng], {
+          icon: L.divIcon({
+            className: 'incident-marker',
+            html: `<div style="font-size: 24px; text-align: center; background: rgba(255,255,255,0.9); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${incident.emoji}</div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+          })
+        }).addTo(map);
+
+        // Add popup with incident details
+        marker.bindPopup(`
+          <div style="text-align: center; padding: 8px;">
+            <div style="font-size: 24px; margin-bottom: 4px;">${incident.emoji}</div>
+            <div style="font-weight: bold; margin-bottom: 4px;">${incident.city}</div>
+            <div style="font-size: 12px; color: #666;">${incident.count} active incidents</div>
+            <div style="font-size: 10px; color: #999; margin-top: 4px;">${incident.type.toUpperCase()}</div>
+          </div>
+        `);
+      });
+
+      // Add some animated pulse effects to markers
+      setTimeout(() => {
+        const markers = document.querySelectorAll('.incident-marker');
+        markers.forEach((marker, index) => {
+          setTimeout(() => {
+            marker.style.animation = 'pulse 2s ease-in-out infinite';
+          }, index * 200);
+        });
+      }, 1000);
+    }
+
+    function scrollToMap() {
+      document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Add some interactive features
+    function updateKPIs() {
+      // Simulate real-time updates
+      const kpiValues = document.querySelectorAll('.kpi .value');
+      kpiValues.forEach((value, index) => {
+        const currentValue = value.textContent;
+        // Add subtle animation to show live updates
+        value.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          value.style.transform = 'scale(1)';
+        }, 200);
+      });
+    }
+
+    // Update KPIs every 30 seconds
+    setInterval(updateKPIs, 30000);
+  </script>
 </body>
 </html>
