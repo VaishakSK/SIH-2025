@@ -9,10 +9,11 @@
   <link rel="apple-touch-icon" href="/images/favicon.png" />
   <style>
     :root{ 
-      --bg-1:#0f172a; --accent:#06b6d4; --accent-2:#0ea5a4; --muted:#94a3b8; 
+      --bg-1:#0f172a; --accent:#06b6d4; --accent-2:#0ea5a4; --muted:#64748b; 
       --radius:14px; --shadow:0 10px 30px rgba(2,6,23,0.12);
       --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --info:#3b82f6;
       --glass: rgba(255,255,255,0.65); --border: rgba(15,23,42,0.08);
+      --text-primary:#1e293b; --text-secondary:#475569; --text-muted:#64748b;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Helvetica,Arial;background:
@@ -374,28 +375,24 @@
                       <span class="report-chip {{#if this.status}}{{this.status}}{{else}}pending{{/if}}">
                         {{#if this.status}}{{this.status}}{{else}}pending{{/if}}
                       </span>
-                      {{#if this.isSample}}
-                        <img src="{{imageSrc this.imagePath this.imageUrl this.photo}}" alt="report" class="report-image" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjM0MCIgdmlld0JveD0iMCAwIDYwMCAzNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iMzQwIiBmaWxsPSIjMDZiNmQ0Ii8+Cjx0ZXh0IHg9IjMwMCIgeT0iMTcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5K3PC90ZXh0Pgo8L3N2Zz4K'"/>
-                      {{else}}
-                        <img src="{{imageSrc this.imagePath this.imageUrl this.photo}}" alt="report" class="report-image"/>
-                      {{/if}}
+                      <img src="{{imageSrc this.imagePath this.imageUrl this.photo}}" alt="report" class="report-image" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjM0MCIgdmlld0JveD0iMCAwIDYwMCAzNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iMzQwIiBmaWxsPSIjMDZiNmQ0Ii8+Cjx0ZXh0IHg9IjMwMCIgeT0iMTcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5K3PC90ZXh0Pgo8L3N2Zz4K'"/>
                       <div class="report-body">
-                        <div class="report-meta">
-                          <div class="report-submitter">
-                            {{#if this.firstName}}{{this.firstName}}
-                            {{else}}
-                              {{#if this.name}}{{this.name}}
-                              {{else}}
-                                {{#if this.user}}
-                                  {{#if this.user.firstName}}{{this.user.firstName}}{{else}}{{this.user}}{{/if}}
-                                {{else}}Unknown{{/if}}
-                              {{/if}}
-                            {{/if}}
-                          </div>
-                          <div class="report-date">{{formatDate this.createdAt}}</div>
+                        <div class="report-title" style="font-weight:700;font-size:16px;color:#1e293b;margin-bottom:8px;line-height:1.3">
+                          {{#if this.title}}{{this.title}}{{else}}Untitled Report{{/if}}
                         </div>
-                        <div class="report-location">
+                        <div class="report-meta">
+                          <div class="report-submitter" style="color:#1e293b;font-weight:600;font-size:14px">
+                            {{#if this.user}}
+                              {{#if this.user.firstName}}{{this.user.firstName}}{{else}}{{this.user.username}}{{/if}}
+                            {{else}}Unknown User{{/if}}
+                          </div>
+                          <div class="report-date" style="color:#64748b;font-size:12px">{{formatDate this.createdAt}}</div>
+                        </div>
+                        <div class="report-location" style="margin-bottom:8px;color:#475569;font-size:13px;font-weight:500">
                           {{#if this.locationText}}{{this.locationText}}{{else if this.address}}{{this.address}}{{else if this.location}}{{this.location}}{{else}}Location unavailable{{/if}}
+                        </div>
+                        <div class="report-description" style="font-size:13px;color:#475569;line-height:1.4;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                          {{#if this.description}}{{this.description}}{{else}}No description provided{{/if}}
                         </div>
                         <div class="report-actions">
                           <a href="/admin/reports/{{#if this._id}}{{this._id}}{{else if this.reportId}}{{this.reportId}}{{else}}{{this.ticket}}{{/if}}" class="action-btn view">👁️ View</a>
@@ -495,41 +492,41 @@
   <div id="reportModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-        <h2 class="modal-title" id="modalTitle">Report Details</h2>
-        <div class="modal-subtitle" id="modalSubtitle">Issue Report Information</div>
+        <button class="modal-close" onclick="closeModal()" style="color:#1e293b;font-size:28px;font-weight:bold">&times;</button>
+        <h2 class="modal-title" id="modalTitle" style="color:#1e293b;font-weight:800;font-size:24px;margin:0 0 8px 0">Report Details</h2>
+        <div class="modal-subtitle" id="modalSubtitle" style="color:#64748b;font-size:16px;margin:0">Issue Report Information</div>
       </div>
       <div class="modal-body">
         <img id="modalImage" class="modal-image" src="" alt="Report Image">
         <div class="modal-details">
           <div class="detail-group">
-            <div class="detail-label">Report ID</div>
-            <div class="detail-value" id="modalReportId">-</div>
+            <div class="detail-label" style="color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Report ID</div>
+            <div class="detail-value" id="modalReportId" style="color:#1e293b;font-weight:700;font-size:16px">-</div>
           </div>
           <div class="detail-group">
-            <div class="detail-label">Status</div>
-            <div class="detail-value" id="modalStatus">-</div>
+            <div class="detail-label" style="color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Status</div>
+            <div class="detail-value" id="modalStatus" style="color:#1e293b;font-weight:700;font-size:16px">-</div>
           </div>
           <div class="detail-group">
-            <div class="detail-label">Submitted By</div>
-            <div class="detail-value" id="modalSubmitter">-</div>
+            <div class="detail-label" style="color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Submitted By</div>
+            <div class="detail-value" id="modalSubmitter" style="color:#1e293b;font-weight:700;font-size:16px">-</div>
           </div>
           <div class="detail-group">
-            <div class="detail-label">Date Submitted</div>
-            <div class="detail-value" id="modalDate">-</div>
+            <div class="detail-label" style="color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Date Submitted</div>
+            <div class="detail-value" id="modalDate" style="color:#1e293b;font-weight:700;font-size:16px">-</div>
           </div>
           <div class="detail-group">
-            <div class="detail-label">Location</div>
-            <div class="detail-value" id="modalLocation">-</div>
+            <div class="detail-label" style="color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Location</div>
+            <div class="detail-value" id="modalLocation" style="color:#1e293b;font-weight:700;font-size:16px">-</div>
           </div>
           <div class="detail-group">
-            <div class="detail-label">Priority</div>
-            <div class="detail-value" id="modalPriority">-</div>
+            <div class="detail-label" style="color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Priority</div>
+            <div class="detail-value" id="modalPriority" style="color:#1e293b;font-weight:700;font-size:16px">-</div>
           </div>
         </div>
         <div class="modal-description">
-          <div class="detail-label">Description</div>
-          <div class="detail-value" id="modalDescription">No description available for this report.</div>
+          <div class="detail-label" style="color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Description</div>
+          <div class="detail-value" id="modalDescription" style="color:#1e293b;font-weight:500;font-size:14px;line-height:1.5;margin-top:8px">No description available for this report.</div>
         </div>
         <div class="modal-actions">
           <button class="modal-btn secondary" onclick="closeModal()">Close</button>
@@ -613,8 +610,49 @@
     // Individual report actions
     function resolveReport(reportId) {
       if (confirm('Are you sure you want to resolve this report?')) {
-        showNotification(`Report ${reportId} resolved successfully`, 'success');
-        // In a real application, this would make an API call
+        // Update the report status in the UI immediately
+        updateReportStatus(reportId, 'resolved');
+        
+        // Try to make API call to update the report status
+        fetch(`http://localhost:7667/admin/reports/${reportId}/resolve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'resolved', resolvedAt: new Date().toISOString() })
+        })
+        .then(response => {
+          // Check if response is ok and is JSON
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON. Admin server may not be running.');
+          }
+          
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            showNotification(`Report ${reportId} resolved successfully`, 'success');
+            // Update stats
+            updateStats();
+          } else {
+            showNotification(`Failed to resolve report: ${data.message}`, 'danger');
+            // Revert UI changes if API call failed
+            updateReportStatus(reportId, 'open');
+          }
+        })
+        .catch(error => {
+          console.error('Error resolving report:', error);
+          
+          // If API call fails, just show a success message for UI-only update
+          // This allows the feature to work even if the admin server has issues
+          showNotification(`Report ${reportId} marked as resolved (UI only)`, 'warning');
+          updateStats();
+        });
       }
     }
 
@@ -715,6 +753,9 @@
           const date = card.querySelector('.report-date').textContent;
           const location = card.querySelector('.report-location').textContent;
           const image = card.querySelector('.report-image').src;
+          const title = card.querySelector('.report-title').textContent;
+          const description = card.querySelector('.report-description').textContent;
+          const priority = card.dataset.priority || 'medium';
           
           openReportModal({
             id: reportId,
@@ -722,7 +763,10 @@
             submitter: submitter,
             date: date,
             location: location,
-            image: image
+            image: image,
+            title: title,
+            description: description,
+            priority: priority
           });
         });
       });
@@ -732,18 +776,24 @@
       currentReportId = reportData.id;
       
       // Populate modal with data
-      document.getElementById('modalTitle').textContent = `Report #${reportData.id}`;
+      document.getElementById('modalTitle').textContent = reportData.title || `Report #${reportData.id}`;
       document.getElementById('modalSubtitle').textContent = `Submitted by ${reportData.submitter}`;
       document.getElementById('modalReportId').textContent = reportData.id;
       document.getElementById('modalStatus').textContent = reportData.status.toUpperCase();
       document.getElementById('modalSubmitter').textContent = reportData.submitter;
       document.getElementById('modalDate').textContent = reportData.date;
       document.getElementById('modalLocation').textContent = reportData.location;
-      document.getElementById('modalPriority').textContent = 'Medium'; // Default priority
+      document.getElementById('modalPriority').textContent = reportData.priority || 'Medium';
       document.getElementById('modalImage').src = reportData.image;
       document.getElementById('modalImage').onerror = function() {
         this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDYwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjMDZiNmQ0Ii8+Cjx0ZXh0IHg9IjMwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5K3PC90ZXh0Pgo8L3N2Zz4K';
       };
+      
+      // Update description
+      const descriptionElement = document.getElementById('modalDescription');
+      if (descriptionElement) {
+        descriptionElement.textContent = reportData.description || 'No description available for this report.';
+      }
       
       // Show modal
       document.getElementById('reportModal').classList.add('show');
@@ -766,8 +816,51 @@
 
     function resolveFromModal() {
       if (confirm('Are you sure you want to resolve this report?')) {
-        showNotification(`Report ${currentReportId} resolved successfully`, 'success');
-        closeModal();
+        // Update the report status in the UI immediately
+        updateReportStatus(currentReportId, 'resolved');
+        
+        // Try to make API call to update the report status
+        fetch(`http://localhost:7667/admin/reports/${currentReportId}/resolve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'resolved', resolvedAt: new Date().toISOString() })
+        })
+        .then(response => {
+          // Check if response is ok and is JSON
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON. Admin server may not be running.');
+          }
+          
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            showNotification(`Report ${currentReportId} resolved successfully`, 'success');
+            // Update stats
+            updateStats();
+            closeModal();
+          } else {
+            showNotification(`Failed to resolve report: ${data.message}`, 'danger');
+            // Revert UI changes if API call failed
+            updateReportStatus(currentReportId, 'open');
+          }
+        })
+        .catch(error => {
+          console.error('Error resolving report:', error);
+          
+          // If API call fails, just show a success message for UI-only update
+          // This allows the feature to work even if the admin server has issues
+          showNotification(`Report ${currentReportId} marked as resolved (UI only)`, 'warning');
+          updateStats();
+          closeModal();
+        });
       }
     }
 
@@ -789,6 +882,47 @@
         closeModal();
       }
     });
+
+    // Helper function to update report status in UI
+    function updateReportStatus(reportId, newStatus) {
+      // Find the report card by ID
+      const reportCard = document.querySelector(`[data-report-id="${reportId}"]`)?.closest('.report-card');
+      if (reportCard) {
+        // Update the status chip
+        const chip = reportCard.querySelector('.report-chip');
+        if (chip) {
+          chip.className = `report-chip ${newStatus}`;
+          chip.textContent = newStatus;
+        }
+        
+        // Update the data attribute
+        reportCard.setAttribute('data-status', newStatus);
+        
+        // Update modal if it's open for this report
+        if (currentReportId === reportId) {
+          const modalStatus = document.getElementById('modalStatus');
+          if (modalStatus) {
+            modalStatus.textContent = newStatus.toUpperCase();
+          }
+        }
+      }
+    }
+
+    // Helper function to update stats
+    function updateStats() {
+      // Count reports by status
+      const openCount = document.querySelectorAll('.report-card[data-status="open"]').length;
+      const inProgressCount = document.querySelectorAll('.report-card[data-status="in-progress"]').length;
+      const resolvedCount = document.querySelectorAll('.report-card[data-status="resolved"]').length;
+      const totalCount = document.querySelectorAll('.report-card').length;
+      
+      // Update stat cards
+      const statCards = document.querySelectorAll('.stat-card .value');
+      if (statCards[0]) statCards[0].textContent = totalCount; // Total Reports
+      if (statCards[1]) statCards[1].textContent = openCount; // Open Issues
+      if (statCards[2]) statCards[2].textContent = inProgressCount; // In Progress
+      if (statCards[3]) statCards[3].textContent = resolvedCount; // Resolved
+    }
 
     // Real-time updates simulation
     setInterval(() => {

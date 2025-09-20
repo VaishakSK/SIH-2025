@@ -190,7 +190,7 @@
               <div class="report-list">
                 {{#if recentReports}}
                   {{#each recentReports}}
-                    <div class="report-item">
+                    <div class="report-item" data-report-id="{{this._id}}">
                       <div class="meta">
                         <div class="title">{{this.title}}</div>
                         <div class="sub">{{this.location}} • {{this.createdAt}}</div>
@@ -247,6 +247,26 @@
 </html>
 
 <script>
+  // Session management - check for session validity
+  function checkSession() {
+    fetch('/session-check', {
+      method: 'GET',
+      credentials: 'same-origin'
+    })
+    .then(response => {
+      if (response.status === 401 || response.status === 403) {
+        // Session expired, redirect to login
+        window.location.href = '/';
+      }
+    })
+    .catch(error => {
+      console.log('Session check failed:', error);
+    });
+  }
+
+  // Check session every 5 minutes
+  setInterval(checkSession, 5 * 60 * 1000);
+
   // Sign out via fetch to server logout route then redirect to main page
   (function(){
     const btn = document.getElementById('signOutBtn');
@@ -266,4 +286,89 @@
         });
     }, { once: true });
   })();
+
+  // Real-time status updates for dashboard
+  let lastUpdateTime = new Date().toISOString();
+  
+  async function checkForUpdates() {
+    try {
+      const res = await fetch(`/reports/updates?since=${lastUpdateTime}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.json();
+      
+      if (data.success && data.updates && data.updates.length > 0) {
+        data.updates.forEach(update => {
+          updateReportStatus(update.id, update.status);
+        });
+        lastUpdateTime = data.timestamp;
+      }
+    } catch (e) {
+      console.log('Status check failed:', e);
+    }
+  }
+
+  function updateReportStatus(reportId, newStatus) {
+    const reportItem = document.querySelector(`[data-report-id="${reportId}"]`);
+    if (reportItem) {
+      const badge = reportItem.querySelector('.badge');
+      if (badge) {
+        badge.textContent = newStatus;
+        badge.className = 'badge';
+        
+        // Add status-specific styling
+        if (newStatus === 'resolved') {
+          badge.style.background = 'linear-gradient(90deg,#bbf7d0,#d1fae5)';
+          badge.style.color = '#064e3b';
+        } else if (newStatus === 'in_progress') {
+          badge.style.background = 'linear-gradient(90deg,#fef3c7,#fde68a)';
+          badge.style.color = '#92400e';
+        } else if (newStatus === 'open') {
+          badge.style.background = 'linear-gradient(90deg,#ecfeff,#bbf7d0)';
+          badge.style.color = '#064e3b';
+        }
+        
+        // Show notification for status changes
+        showNotification(`Report status updated to: ${newStatus}`, 'success');
+      }
+    }
+  }
+
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed; top: 20px; right: 20px; z-index: 1000;
+      padding: 12px 20px; border-radius: 8px; color: white;
+      font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+      animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+  }
+
+  // Add CSS for animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Check for updates every 30 seconds
+  setInterval(checkForUpdates, 30000);
+  
+  // Initial check after 5 seconds
+  setTimeout(checkForUpdates, 5000);
 </script>

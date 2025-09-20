@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Upload Photo • CivicConnect</title>
+  <!-- Include ExifReader (for metadata check) -->
+  <script src="https://cdn.jsdelivr.net/npm/exifreader@4.12.0/dist/exif-reader.min.js"></script>
   <style>
     :root{
       --bg-start:#f6f9fb;
@@ -69,6 +71,55 @@
 
     /* accessibility & small tweaks */
     #dropZone.hover{border-color:rgba(14,165,164,0.3);box-shadow:0 8px 30px rgba(14,165,164,0.06)}
+    
+    /* AI detection feedback */
+    .ai-warning{
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #f59e0b;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    .ai-warning.show{display: flex;}
+    .ai-warning-icon{
+      color: #d97706;
+      font-size: 18px;
+    }
+    .ai-warning-text{
+      color: #92400e;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .btn:disabled{
+      background: #d1d5db;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+    .detection-status{
+      font-size: 12px;
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: none;
+    }
+    .detection-status.analyzing{
+      background: #dbeafe;
+      color: #1e40af;
+      display: block;
+    }
+    .detection-status.clean{
+      background: #dcfce7;
+      color: #166534;
+      display: block;
+    }
+    .detection-status.ai-detected{
+      background: #fef3c7;
+      color: #92400e;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -98,6 +149,17 @@
               <img id="preview" class="preview" alt="Selected photo preview">
             </label>
 
+            <!-- AI Detection Warning -->
+            <div id="aiWarning" class="ai-warning">
+              <div class="ai-warning-icon">⚠️</div>
+              <div class="ai-warning-text">
+                This image appears to be AI-generated. Please upload a real photo of the actual issue.
+              </div>
+            </div>
+
+            <!-- Detection Status -->
+            <div id="detectionStatus" class="detection-status"></div>
+
             <!-- hidden location fields -->
             <div style="margin-top:12px">
               <div style="display:flex;justify-content:space-between;align-items:center">
@@ -108,6 +170,9 @@
               <div class="locRow">
                 <input id="address" name="address" type="text" placeholder="Street / area (will auto-fill)" />
                 <button id="useLoc" type="button" class="btn-ghost">Use my location</button>
+              </div>
+              <div id="locationStatus" class="muted" style="margin-top: 6px; font-size: 12px; display: none;">
+                📍 Automatically capturing location...
               </div>
 
               <input type="hidden" id="latitude" name="latitude">
@@ -153,6 +218,309 @@
   {{> footer}}
 
   <script>
+  class AIImageDetector {
+      constructor() {
+          this.maxBytes = 6 * 1024 * 1024;
+      }
+
+      // Helper: safely extract RGBA
+      getRGBAFromImageData(imageData, idx) {
+          return {
+              r: imageData.data[idx],
+              g: imageData.data[idx + 1],
+              b: imageData.data[idx + 2],
+              a: imageData.data[idx + 3],
+          };
+      }
+
+      // Enhanced AI detection with improved accuracy
+      detectAIGeneratedHeuristic(width, height, imageData, exifTags) {
+          let score = 0;
+          const details = {};
+
+          // Heuristic 1: AI-typical dimensions (more comprehensive)
+          const aiTypicalSizes = [
+              [512, 512], [1024, 1024], [768, 768], [640, 640], [1280, 1280],
+              [512, 768], [768, 512], [1024, 1536], [1536, 1024], [832, 1216],
+              [1216, 832], [896, 1152], [1152, 896], [1024, 1024], [1536, 1536]
+          ];
+          const suspiciousSize = aiTypicalSizes.some(
+              ([w, h]) => (width === w && height === h) || (width === h && height === w)
+          );
+          details.suspiciousSize = suspiciousSize;
+          if (suspiciousSize) score += 3;
+
+          // Heuristic 2: Perfect square ratios (very suspicious for AI)
+          const ratio = width / height;
+          const isPerfectSquare = Math.abs(ratio - 1.0) < 0.01;
+          const isCommonAIRatio = [1.0, 1.5, 0.75, 1.33, 0.75].some(r => Math.abs(r - ratio) < 0.02);
+          details.suspiciousRatio = isPerfectSquare || isCommonAIRatio;
+          if (isPerfectSquare) score += 2;
+          else if (isCommonAIRatio) score += 1;
+
+          // Heuristic 3: Enhanced color analysis
+          let rSum=0, gSum=0, bSum=0, r2Sum=0, g2Sum=0, b2Sum=0, count=0;
+          let maxR=0, maxG=0, maxB=0, minR=255, minG=255, minB=255;
+          const stepY = Math.max(1, Math.floor(height / 80));
+          const stepX = Math.max(1, Math.floor(width / 80));
+          
+          for (let y = 0; y < height; y += stepY) {
+              for (let x = 0; x < width; x += stepX) {
+                  const idx = (y * width + x) * 4;
+                  const { r, g, b } = this.getRGBAFromImageData(imageData, idx);
+                  rSum += r; gSum += g; bSum += b;
+                  r2Sum += r * r; g2Sum += g * g; b2Sum += b * b;
+                  maxR = Math.max(maxR, r); maxG = Math.max(maxG, g); maxB = Math.max(maxB, b);
+                  minR = Math.min(minR, r); minG = Math.min(minG, g); minB = Math.min(minB, b);
+                  count++;
+              }
+          }
+
+          let lowVariance = false;
+          let limitedColorRange = false;
+          if (count > 0) {
+              const rAvg = rSum / count, gAvg = gSum / count, bAvg = bSum / count;
+              const rVar = r2Sum / count - rAvg * rAvg;
+              const gVar = g2Sum / count - gAvg * gAvg;
+              const bVar = b2Sum / count - bAvg * bAvg;
+              const avgVar = (rVar + gVar + bVar) / 3;
+              
+              // More sensitive variance detection
+              if (avgVar < 15) lowVariance = true;
+              else if (avgVar < 25) score += 1; // Partial score for moderate variance
+              
+              // Check for limited color range (AI often has compressed ranges)
+              const colorRange = (maxR - minR) + (maxG - minG) + (maxB - minB);
+              if (colorRange < 300) limitedColorRange = true;
+          }
+          details.lowVariance = lowVariance;
+          details.limitedColorRange = limitedColorRange;
+          if (lowVariance) score += 2;
+          if (limitedColorRange) score += 1;
+
+          // Heuristic 4: Enhanced pattern analysis
+          let uniformPatterns = false;
+          let repetitivePatterns = false;
+          if (count > 0) {
+              const rAvg = rSum / count, gAvg = gSum / count, bAvg = bSum / count;
+              let similarPixels = 0;
+              let repetitiveBlocks = 0;
+              const threshold = 8; // More sensitive threshold
+              
+              // Check for uniform patterns
+              for (let y = 0; y < height; y += stepY) {
+                  for (let x = 0; x < width; x += stepX) {
+                      const idx = (y * width + x) * 4;
+                      const { r, g, b } = this.getRGBAFromImageData(imageData, idx);
+                      if (Math.abs(r - rAvg) < threshold && Math.abs(g - gAvg) < threshold && Math.abs(b - bAvg) < threshold) {
+                          similarPixels++;
+                      }
+                  }
+              }
+              
+              // Check for repetitive block patterns (common in AI)
+              const blockSize = Math.max(8, Math.floor(Math.min(width, height) / 20));
+              for (let y = 0; y < height - blockSize; y += blockSize) {
+                  for (let x = 0; x < width - blockSize; x += blockSize) {
+                      const block1 = this.getBlockAverage(imageData, x, y, blockSize, width);
+                      const block2 = this.getBlockAverage(imageData, x + blockSize, y, blockSize, width);
+                      if (this.blocksSimilar(block1, block2, 15)) repetitiveBlocks++;
+                  }
+              }
+              
+              if (similarPixels / count > 0.75) uniformPatterns = true;
+              if (repetitiveBlocks > 5) repetitivePatterns = true;
+          }
+          details.uniformPatterns = uniformPatterns;
+          details.repetitivePatterns = repetitivePatterns;
+          if (uniformPatterns) score += 2;
+          if (repetitivePatterns) score += 1;
+
+          // Heuristic 5: Enhanced edge detection
+          let edgeStrength = 0, edgeCount = 0;
+          let smoothEdges = 0;
+          for (let y = 1; y < height - 1; y += stepY) {
+              for (let x = 1; x < width - 1; x += stepX) {
+                  const idx = (y * width + x) * 4;
+                  const idxUp = ((y - 1) * width + x) * 4;
+                  const idxLeft = (y * width + (x - 1)) * 4;
+                  
+                  const diffH = Math.abs(imageData.data[idx] - imageData.data[idxLeft]) +
+                               Math.abs(imageData.data[idx+1] - imageData.data[idxLeft+1]) +
+                               Math.abs(imageData.data[idx+2] - imageData.data[idxLeft+2]);
+                  const diffV = Math.abs(imageData.data[idx] - imageData.data[idxUp]) +
+                               Math.abs(imageData.data[idx+1] - imageData.data[idxUp+1]) +
+                               Math.abs(imageData.data[idx+2] - imageData.data[idxUp+2]);
+                  
+                  const edgeValue = Math.max(diffH, diffV);
+                  edgeStrength += edgeValue;
+                  edgeCount++;
+                  
+                  if (edgeValue < 10) smoothEdges++;
+              }
+          }
+          const avgEdge = edgeCount > 0 ? edgeStrength / edgeCount : 0;
+          const weakEdges = avgEdge < 12;
+          const tooSmooth = edgeCount > 0 && (smoothEdges / edgeCount) > 0.7;
+          details.weakEdges = weakEdges;
+          details.tooSmooth = tooSmooth;
+          if (weakEdges) score += 1;
+          if (tooSmooth) score += 2;
+
+          // Heuristic 6: EXIF metadata analysis (more comprehensive)
+          const hasCameraMake = exifTags.Make && exifTags.Make.description;
+          const hasCameraModel = exifTags.Model && exifTags.Model.description;
+          const hasLensInfo = exifTags.LensModel || exifTags.LensMake;
+          const hasGPS = exifTags.GPSLatitude && exifTags.GPSLongitude;
+          const hasDateTime = exifTags.DateTime || exifTags.DateTimeOriginal;
+          const hasSoftware = exifTags.Software && exifTags.Software.description;
+          
+          const missingCameraData = !hasCameraMake && !hasCameraModel;
+          const missingLensData = !hasLensInfo;
+          const suspiciousSoftware = hasSoftware && (
+              hasSoftware.toLowerCase().includes('ai') ||
+              hasSoftware.toLowerCase().includes('generated') ||
+              hasSoftware.toLowerCase().includes('dall-e') ||
+              hasSoftware.toLowerCase().includes('midjourney') ||
+              hasSoftware.toLowerCase().includes('stable diffusion')
+          );
+          
+          details.missingCameraData = missingCameraData;
+          details.missingLensData = missingLensData;
+          details.suspiciousSoftware = suspiciousSoftware;
+          details.hasGPS = hasGPS;
+          details.hasDateTime = hasDateTime;
+          
+          if (missingCameraData) score += 2;
+          if (missingLensData) score += 1;
+          if (suspiciousSoftware) score += 3;
+          if (hasGPS) score -= 1; // GPS suggests real camera
+          if (hasDateTime) score -= 1; // DateTime suggests real camera
+
+          // Heuristic 7: Noise pattern analysis
+          let noiseLevel = 0;
+          for (let y = 1; y < height - 1; y += stepY * 2) {
+              for (let x = 1; x < width - 1; x += stepX * 2) {
+                  const idx = (y * width + x) * 4;
+                  const neighbors = [
+                      imageData.data[idx - 4], imageData.data[idx + 4],
+                      imageData.data[idx - width * 4], imageData.data[idx + width * 4]
+                  ];
+                  const center = imageData.data[idx];
+                  const variance = neighbors.reduce((sum, val) => sum + Math.abs(val - center), 0) / neighbors.length;
+                  noiseLevel += variance;
+              }
+          }
+          const avgNoise = noiseLevel / Math.max(1, Math.floor((height / stepY) * (width / stepX) / 4));
+          const lowNoise = avgNoise < 5; // AI images often have very low noise
+          details.lowNoise = lowNoise;
+          if (lowNoise) score += 1;
+
+          // Heuristic 8: Color distribution analysis
+          let colorBins = new Array(8).fill(0);
+          for (let y = 0; y < height; y += stepY) {
+              for (let x = 0; x < width; x += stepX) {
+                  const idx = (y * width + x) * 4;
+                  const { r, g, b } = this.getRGBAFromImageData(imageData, idx);
+                  const bin = Math.floor((r + g + b) / 96); // 8 bins for 0-255 range
+                  colorBins[Math.min(bin, 7)]++;
+              }
+          }
+          const maxBin = Math.max(...colorBins);
+          const uniformDistribution = maxBin / count > 0.4; // If one bin has >40% of pixels
+          details.uniformDistribution = uniformDistribution;
+          if (uniformDistribution) score += 1;
+
+          // Final decision with adjusted threshold
+          const isAIGenerated = score >= 5; // Increased threshold for better accuracy
+          
+          return {
+              isAIGenerated,
+              score: Math.min(score, 15), // Cap at 15 for display
+              maxScore: 15,
+              ...details
+          };
+      }
+
+      // Helper methods for pattern analysis
+      getBlockAverage(imageData, startX, startY, size, width) {
+          let rSum = 0, gSum = 0, bSum = 0, count = 0;
+          for (let y = startY; y < startY + size && y < imageData.height; y++) {
+              for (let x = startX; x < startX + size && x < width; x++) {
+                  const idx = (y * width + x) * 4;
+                  rSum += imageData.data[idx];
+                  gSum += imageData.data[idx + 1];
+                  bSum += imageData.data[idx + 2];
+                  count++;
+              }
+          }
+          return count > 0 ? { r: rSum / count, g: gSum / count, b: bSum / count } : { r: 0, g: 0, b: 0 };
+      }
+
+      blocksSimilar(block1, block2, threshold) {
+          const diff = Math.abs(block1.r - block2.r) + Math.abs(block1.g - block2.g) + Math.abs(block1.b - block2.b);
+          return diff < threshold;
+      }
+
+      // Analyze image
+      async analyzeImage(file) {
+          return new Promise((resolve, reject) => {
+              if (!file || !file.type.startsWith('image/')) {
+                  reject(new Error('Invalid file type'));
+                  return;
+              }
+              if (file.size > this.maxBytes) {
+                  reject(new Error('File too large'));
+                  return;
+              }
+
+              const img = new Image();
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+
+              img.onload = async () => {
+                  try {
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      ctx.drawImage(img, 0, 0);
+                      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                      // Read EXIF metadata
+                      let exifTags = {};
+                      try {
+                          exifTags = await ExifReader.load(file);
+                      } catch (err) {
+                          exifTags = {};
+                      }
+
+                      const result = this.detectAIGeneratedHeuristic(
+                          canvas.width,
+                          canvas.height,
+                          imageData,
+                          exifTags
+                      );
+
+                      resolve({
+                          ...result,
+                          width: canvas.width,
+                          height: canvas.height,
+                          fileName: file.name,
+                          fileSize: file.size
+                      });
+                  } catch (error) {
+                      reject(error);
+                  }
+              };
+
+              img.onerror = () => reject(new Error('Failed to load image'));
+              img.src = URL.createObjectURL(file);
+          });
+      }
+  }
+
+  // Export globally
+  window.AIImageDetector = AIImageDetector;
+
   (function(){
     const photo = document.getElementById('photo');
     const chooseBtn = document.getElementById('chooseBtn');
@@ -167,7 +535,14 @@
     const lonField = document.getElementById('longitude');
     const locationText = document.getElementById('locationText');
     const clearBtn = document.getElementById('clearBtn');
+    const doneBtn = document.getElementById('doneBtn');
+    const aiWarning = document.getElementById('aiWarning');
+    const detectionStatus = document.getElementById('detectionStatus');
     const maxBytes = 6 * 1024 * 1024;
+    
+    // Initialize AI detector
+    const aiDetector = new AIImageDetector();
+    let isAIGenerated = false;
 
     chooseBtn.addEventListener('click', ()=>photo.click());
     photo.addEventListener('change', ()=>{ const f = photo.files[0]; if (!f) return; handleFile(f); });
@@ -177,11 +552,15 @@
     ['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, (e)=>{ e.preventDefault(); dropZone.classList.remove('hover'); }));
     dropZone.addEventListener('drop', e=>{ e.preventDefault(); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) { const dt = new DataTransfer(); dt.items.add(f); photo.files = dt.files; handleFile(f); } });
 
-    function handleFile(f){
+    async function handleFile(f){
       if (!f) return;
       if (f.size > maxBytes) { alert('Image too large (max 6MB)'); photo.value=''; return; }
       const allowed = ['image/jpeg','image/png','image/webp'];
       if (!allowed.includes(f.type)) { alert('Only jpg / png / webp allowed'); photo.value=''; return; }
+
+      // Show analyzing status
+      showDetectionStatus('analyzing', 'Analyzing image for AI generation...');
+      hideAIWarning();
 
       // revoke previous object URLs to avoid leaks
       try {
@@ -205,6 +584,70 @@
       sidePreview.style.display = 'block';
       sidePreview.alt = f.name || 'Selected photo';
       emptyPreview.style.display = 'none';
+
+      // Run AI detection
+      try {
+        const result = await aiDetector.analyzeImage(f);
+        isAIGenerated = result.isAIGenerated;
+        
+        if (isAIGenerated) {
+          const reasons = [];
+          if (result.suspiciousSize) reasons.push('suspicious size');
+          if (result.suspiciousRatio) reasons.push('suspicious ratio');
+          if (result.lowVariance) reasons.push('low color variance');
+          if (result.limitedColorRange) reasons.push('limited color range');
+          if (result.uniformPatterns) reasons.push('uniform patterns');
+          if (result.repetitivePatterns) reasons.push('repetitive patterns');
+          if (result.weakEdges) reasons.push('weak edges');
+          if (result.tooSmooth) reasons.push('too smooth');
+          if (result.missingCameraData) reasons.push('missing camera data');
+          if (result.missingLensData) reasons.push('missing lens data');
+          if (result.suspiciousSoftware) reasons.push('suspicious software');
+          if (result.lowNoise) reasons.push('low noise');
+          if (result.uniformDistribution) reasons.push('uniform distribution');
+          
+          const reasonText = reasons.length > 0 ? ` (${reasons.slice(0, 3).join(', ')}${reasons.length > 3 ? '...' : ''})` : '';
+          showDetectionStatus('ai-detected', `⚠️ AI-generated image detected${reasonText} - Score: ${result.score}/${result.maxScore}`);
+          showAIWarning();
+          disableDoneButton();
+        } else {
+          const confidence = result.score < 2 ? 'high' : result.score < 4 ? 'medium' : 'low';
+          showDetectionStatus('clean', `✓ Image appears to be authentic (${confidence} confidence) - Score: ${result.score}/${result.maxScore}`);
+          hideAIWarning();
+          enableDoneButton();
+        }
+      } catch (error) {
+        console.error('AI detection error:', error);
+        showDetectionStatus('clean', '✓ Image loaded (AI detection unavailable)');
+        hideAIWarning();
+        enableDoneButton();
+      }
+
+      // Automatically get location when image is uploaded
+      await getCurrentLocation();
+    }
+
+    function showDetectionStatus(type, message) {
+      detectionStatus.className = `detection-status ${type}`;
+      detectionStatus.textContent = message;
+    }
+
+    function showAIWarning() {
+      aiWarning.classList.add('show');
+    }
+
+    function hideAIWarning() {
+      aiWarning.classList.remove('show');
+    }
+
+    function disableDoneButton() {
+      doneBtn.disabled = true;
+      doneBtn.title = 'Cannot proceed with AI-generated image';
+    }
+
+    function enableDoneButton() {
+      doneBtn.disabled = false;
+      doneBtn.title = '';
     }
 
     clearBtn.addEventListener('click', ()=>{ 
@@ -216,25 +659,101 @@
       emptyPreview.style.display='block';
       if (placeholder) placeholder.classList.remove('hidden');
 
+      // Reset AI detection state
+      isAIGenerated = false;
+      hideAIWarning();
+      detectionStatus.className = 'detection-status';
+      detectionStatus.textContent = '';
+      enableDoneButton();
+
+      // Clear location data
       address.value=''; latField.value=''; lonField.value=''; locationText.value='';
+      useLoc.disabled = false;
+      useLoc.textContent = 'Use my location';
+      const locationStatus = document.getElementById('locationStatus');
+      if (locationStatus) locationStatus.style.display = 'none';
     });
 
-    useLoc.addEventListener('click', ()=>{
-      if (!navigator.geolocation){ alert('Geolocation not supported'); return; }
-      useLoc.disabled=true; useLoc.textContent='Getting…';
-      navigator.geolocation.getCurrentPosition(async pos=>{
-        latField.value = pos.coords.latitude; lonField.value = pos.coords.longitude;
-        try{
-          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(pos.coords.latitude)}&lon=${encodeURIComponent(pos.coords.longitude)}&addressdetails=1`;
-          const r = await fetch(url);
-          if (r.ok){ const data = await r.json(); const human = data.display_name || ''; if (human){ address.value = human; locationText.value = human; } }
-        }catch(e){ console.warn('reverse failed', e); }
-        useLoc.disabled=false; useLoc.textContent='Use my location';
-      }, err=>{ alert('Could not get location: '+(err.message||err)); useLoc.disabled=false; useLoc.textContent='Use my location'; }, { enableHighAccuracy:true, timeout:15000 });
-    });
+    // Function to get current location
+    async function getCurrentLocation() {
+      if (!navigator.geolocation) {
+        console.warn('Geolocation not supported');
+        return;
+      }
+      
+      const locationStatus = document.getElementById('locationStatus');
+      
+      try {
+        useLoc.disabled = true;
+        useLoc.textContent = 'Getting location...';
+        locationStatus.style.display = 'block';
+        locationStatus.textContent = '📍 Automatically capturing location...';
+        
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 300000 // 5 minutes cache
+          });
+        });
+        
+        latField.value = position.coords.latitude;
+        lonField.value = position.coords.longitude;
+        
+        // Get human-readable address
+        try {
+          locationStatus.textContent = '📍 Getting address...';
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(position.coords.latitude)}&lon=${encodeURIComponent(position.coords.longitude)}&addressdetails=1`;
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            const humanAddress = data.display_name || '';
+            if (humanAddress) {
+              address.value = humanAddress;
+              locationText.value = humanAddress;
+              locationStatus.textContent = '✅ Location captured successfully';
+              setTimeout(() => {
+                locationStatus.style.display = 'none';
+              }, 3000);
+            } else {
+              locationStatus.textContent = '⚠️ Location captured but address not found';
+              setTimeout(() => {
+                locationStatus.style.display = 'none';
+              }, 3000);
+            }
+          } else {
+            locationStatus.textContent = '⚠️ Location captured but address lookup failed';
+            setTimeout(() => {
+              locationStatus.style.display = 'none';
+            }, 3000);
+          }
+        } catch (e) {
+          console.warn('Reverse geocoding failed:', e);
+          locationStatus.textContent = '⚠️ Location captured but address lookup failed';
+          setTimeout(() => {
+            locationStatus.style.display = 'none';
+          }, 3000);
+        }
+        
+        useLoc.disabled = false;
+        useLoc.textContent = 'Use my location';
+        
+      } catch (error) {
+        console.warn('Could not get location:', error.message);
+        locationStatus.textContent = '❌ Could not get location automatically';
+        setTimeout(() => {
+          locationStatus.style.display = 'none';
+        }, 3000);
+        useLoc.disabled = false;
+        useLoc.textContent = 'Use my location';
+      }
+    }
+
+    useLoc.addEventListener('click', getCurrentLocation);
 
     document.getElementById('uploadForm').addEventListener('submit', function(e){
       if (!photo.files[0]){ e.preventDefault(); showNotification('Please choose a photo', 'error'); return; }
+      if (isAIGenerated){ e.preventDefault(); showNotification('Cannot submit AI-generated images. Please upload a real photo.', 'error'); return; }
       // allow empty address here; user can fill in review step
     });
 

@@ -313,6 +313,41 @@ router.get('/reports', async (req, res) => {
   }
 });
 
+// Get status updates for real-time updates (JSON) - MUST be before /reports/:id routes
+router.get('/reports/updates', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const since = req.query.since;
+    if (!since) {
+      return res.status(400).json({ success: false, message: 'since parameter required' });
+    }
+
+    // Find reports that have been updated since the given timestamp
+    const reports = await Report.find({
+      user: req.session.userId,
+      updatedAt: { $gt: new Date(since) }
+    }).select('_id status updatedAt').lean();
+
+    const updates = reports.map(report => ({
+      id: report._id.toString(),
+      status: report.status,
+      updatedAt: report.updatedAt
+    }));
+
+    return res.json({
+      success: true,
+      updates: updates,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Status updates route error:', err);
+    return res.status(500).json({ success: false, message: 'Error fetching updates' });
+  }
+});
+
 // GET view single report page — public visibility
 router.get('/reports/:id', async (req, res) => {
   try {

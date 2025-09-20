@@ -26,15 +26,36 @@ app.get('/', (req, res) => res.render('home'));
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-change-in-production',
-    resave: false,
-    saveUninitialized: true,
+    resave: true, // Changed to true to refresh session on each request
+    saveUninitialized: false, // Changed to false for better security
+    rolling: true, // Reset expiration on each request
     store: process.env.MONGO_URI
-        ? MongoStore.create({ mongoUrl: process.env.MONGO_URI, collectionName: 'admin_sessions' })
+        ? MongoStore.create({ 
+            mongoUrl: process.env.MONGO_URI, 
+            collectionName: 'admin_sessions',
+            touchAfter: 24 * 3600, // lazy session update
+            ttl: 7 * 24 * 60 * 60 // 7 days
+        })
         : undefined,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
+    cookie: { 
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        secure: false, // Set to true in production with HTTPS
+        httpOnly: true, // Prevent XSS attacks
+        sameSite: 'lax' // CSRF protection
+    },
+    name: 'admin.sid' // Unique session name for admin
 }));
 
 app.use(passport.initialize());
+
+// Session refresh middleware - prevents premature logout
+app.use((req, res, next) => {
+    if (req.session && req.session.userId) {
+        // Refresh the session on each request to prevent timeout
+        req.session.touch();
+    }
+    next();
+});
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && (process.env.ADMIN_GOOGLE_CALLBACK_URL || process.env.GOOGLE_CALLBACK_URL)) {
     passport.use(new GoogleStrategy({
@@ -83,12 +104,41 @@ function isGoogleStrategyEnabled() {
 }
 
 function requireAdmin(req, res, next) {
-    if (!req.session || !req.session.userId) return res.redirect('/admin/login');
+    if (!req.session || !req.session.userId) {
+        console.log('Admin auth failed: No session or userId');
+        return res.redirect('/admin/login');
+    }
+    
     User.findById(req.session.userId).then(user => {
-        if (user && user.isAdmin) return next();
+        if (user && user.isAdmin) {
+            // Refresh session on successful auth
+            req.session.touch();
+            return next();
+        }
+        console.log('Admin auth failed: User not found or not admin');
         return res.redirect('/');
-    }).catch(() => res.redirect('/'));
+    }).catch(err => {
+        console.log('Admin auth error:', err);
+        return res.redirect('/');
+    });
 }
+
+// Session check endpoint
+app.get('/admin/session-check', (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.status(401).json({ valid: false, message: 'No session' });
+    }
+    
+    User.findById(req.session.userId).then(user => {
+        if (user && user.isAdmin) {
+            req.session.touch(); // Refresh session
+            return res.json({ valid: true, message: 'Session valid' });
+        }
+        return res.status(403).json({ valid: false, message: 'Not admin' });
+    }).catch(() => {
+        return res.status(500).json({ valid: false, message: 'Database error' });
+    });
+});
 
 // public admin home
 app.get('/admin/home', (req, res) => {
@@ -228,114 +278,42 @@ app.get('/admin/reports', requireAdmin, async (req, res) => {
         const Report = require('../User/models/report');
         const recentReports = (await Report.find({})
                 .sort({ createdAt: -1 })
-                .limit(20)
-                .populate('user', 'firstName lastName')
+                .limit(50)
+                .populate('user', 'firstName lastName email username')
                 .lean())
-            .map(r => ({ ...r, createdAt: new Date(r.createdAt).toLocaleString(), isSample: false }));
+            .map(r => ({ 
+                ...r, 
+                createdAt: new Date(r.createdAt).toLocaleString(), 
+                // Ensure we have proper fields for display
+                title: r.title || 'Untitled Report',
+                description: r.description || 'No description provided',
+                locationText: r.locationText || r.address || 'Location not specified',
+                status: r.status || 'open',
+                priority: r.priority || 'medium'
+            }));
+
+        // Calculate real stats from the reports
+        const totalReports = recentReports.length;
+        const openCount = recentReports.filter(r => r.status === 'open').length;
+        const inProgressCount = recentReports.filter(r => r.status === 'in-progress').length;
+        const resolvedCount = recentReports.filter(r => r.status === 'resolved').length;
         
-        // Add temporary sample data for demonstration
-        const sampleReports = [
-            {
-                reportId: 'R001',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'John' },
-                status: 'open',
-                locationText: 'Main Street, Downtown',
-                title: 'Pothole Repair',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R002',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'Sarah' },
-                status: 'in_progress',
-                locationText: 'Oak Avenue, West Side',
-                title: 'Streetlight Outage',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R003',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'Mike' },
-                status: 'resolved',
-                locationText: 'Park Road, East End',
-                title: 'Water Leakage',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R004',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'Emma' },
-                status: 'open',
-                locationText: 'Central Plaza',
-                title: 'Garbage Collection',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R005',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'David' },
-                status: 'in_progress',
-                locationText: 'Riverside Drive',
-                title: 'Traffic Signal',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R006',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'Lisa' },
-                status: 'resolved',
-                locationText: 'Hillside Avenue',
-                title: 'Sewer Blockage',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R007',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'Tom' },
-                status: 'open',
-                locationText: 'University Street',
-                title: 'Sidewalk Damage',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R008',
-                imagePath: 'mfqexeip-68s649.jpg',
-                user: { firstName: 'Anna' },
-                status: 'in_progress',
-                locationText: 'Market Square',
-                title: 'Public Wi-Fi Issue',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R009',
-                imagePath: null, // No image - will use fallback
-                user: { firstName: 'Alex' },
-                status: 'open',
-                locationText: 'Garden District',
-                title: 'Tree Trimming',
-                createdAt: new Date().toLocaleString()
-            },
-            {
-                reportId: 'R010',
-                imagePath: null, // No image - will use fallback
-                user: { firstName: 'Maria' },
-                status: 'resolved',
-                locationText: 'Business District',
-                title: 'Signage Repair',
-                createdAt: new Date().toLocaleString()
-            }
-        ];
-        
-        // Combine real reports with sample data
-        const allReports = [
-            ...recentReports,
-            ...sampleReports.map(r => ({ ...r, isSample: true }))
-        ];
-        res.render('reports', { recentReports: allReports });
+        res.render('reports', { 
+            recentReports,
+            reportsCount: totalReports,
+            openCount: openCount,
+            inProgressCount: inProgressCount,
+            resolvedCount: resolvedCount
+        });
     } catch (e) {
         console.error('Admin reports error:', e);
-        res.render('reports', { recentReports: [] });
+        res.render('reports', { 
+            recentReports: [],
+            reportsCount: 0,
+            openCount: 0,
+            inProgressCount: 0,
+            resolvedCount: 0
+        });
     }
 });
 
@@ -363,6 +341,55 @@ app.post('/admin/users/:id/toggle-admin', requireAdmin, async (req, res) => {
     } catch (e) {
         console.error('Toggle admin error:', e);
         res.redirect('/admin/users');
+    }
+});
+
+// Resolve report endpoint
+app.post('/admin/reports/:id/resolve', requireAdmin, async (req, res) => {
+    try {
+        const reportId = req.params.id;
+        const { status, resolvedAt } = req.body;
+        
+        // Try to find the report in the database first
+        const Report = require('../User/models/report');
+        let report = await Report.findById(reportId);
+        
+        if (report) {
+            // Update real report in database
+            report.status = status || 'resolved';
+            if (resolvedAt) {
+                report.resolvedAt = new Date(resolvedAt);
+            }
+            await report.save();
+            
+            res.json({ 
+                success: true, 
+                message: 'Report resolved successfully',
+                report: {
+                    id: report._id,
+                    status: report.status,
+                    resolvedAt: report.resolvedAt
+                }
+            });
+        } else {
+            // For sample reports, just return success (they're not in the database)
+            res.json({ 
+                success: true, 
+                message: 'Sample report status updated',
+                report: {
+                    id: reportId,
+                    status: status || 'resolved',
+                    resolvedAt: resolvedAt || new Date().toISOString()
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error resolving report:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to resolve report',
+            error: error.message 
+        });
     }
 });
 

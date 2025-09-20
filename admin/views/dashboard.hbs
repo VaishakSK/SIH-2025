@@ -576,6 +576,26 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+  // Session management - check for session validity
+  function checkSession() {
+    fetch('/admin/session-check', {
+      method: 'GET',
+      credentials: 'same-origin'
+    })
+    .then(response => {
+      if (response.status === 401 || response.status === 403) {
+        // Session expired, redirect to login
+        window.location.href = '/admin/login';
+      }
+    })
+    .catch(error => {
+      console.log('Session check failed:', error);
+    });
+  }
+
+  // Check session every 5 minutes
+  setInterval(checkSession, 5 * 60 * 1000);
+
   (function(){
     if (!window.Chart) return;
     const accent = '#06b6d4';

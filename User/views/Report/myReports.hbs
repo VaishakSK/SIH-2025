@@ -68,7 +68,7 @@
       {{#if reports.length}}
       <div class="grid" aria-live="polite">
         {{#each reports}}
-        <article class="card" role="article">
+        <article class="card" role="article" data-report-id="{{this._id}}">
           <div class="thumb">
             <img src="{{this.imagePath}}" alt="{{this.title}}">
           </div>
@@ -140,4 +140,135 @@
       showNotification('Error fetching status', 'error');
     }
   }
+
+  // Real-time status updates
+  let lastUpdateTime = new Date().toISOString();
+  
+  async function checkForUpdates() {
+    try {
+      const res = await fetch(`/reports/updates?since=${lastUpdateTime}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.json();
+      
+      if (data.success && data.updates && data.updates.length > 0) {
+        data.updates.forEach(update => {
+          updateReportStatus(update.id, update.status);
+        });
+        lastUpdateTime = data.timestamp;
+      }
+    } catch (e) {
+      console.log('Status check failed:', e);
+    }
+  }
+
+  function updateReportStatus(reportId, newStatus) {
+    const reportCard = document.querySelector(`[data-report-id="${reportId}"]`);
+    if (reportCard) {
+      const badge = reportCard.querySelector('.badge');
+      if (badge) {
+        badge.textContent = newStatus;
+        badge.className = 'badge';
+        
+        // Add status-specific styling
+        if (newStatus === 'resolved') {
+          badge.style.background = 'linear-gradient(90deg,#bbf7d0,#d1fae5)';
+          badge.style.color = '#064e3b';
+        } else if (newStatus === 'in_progress') {
+          badge.style.background = 'linear-gradient(90deg,#fef3c7,#fde68a)';
+          badge.style.color = '#92400e';
+        } else if (newStatus === 'open') {
+          badge.style.background = 'linear-gradient(90deg,#ecfeff,#bbf7d0)';
+          badge.style.color = '#064e3b';
+        }
+        
+        // Show notification for status changes
+        showNotification(`Report status updated to: ${newStatus}`, 'success');
+      }
+    }
+  }
+
+  // Check for updates every 30 seconds
+  setInterval(checkForUpdates, 30000);
+  
+  // Initial check after 5 seconds
+  setTimeout(checkForUpdates, 5000);
+
+  // Notification functions
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed; top: 20px; right: 20px; z-index: 1000;
+      padding: 12px 20px; border-radius: 8px; color: white;
+      font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+      animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+  }
+
+  function showDialog(title, message, options = {}) {
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white; border-radius: 12px; padding: 24px;
+      max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    `;
+    
+    content.innerHTML = `
+      <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700;">${title}</h3>
+      <p style="margin: 0 0 20px 0; color: #64748b; line-height: 1.5;">${message}</p>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        ${(options.buttons || [{ text: 'Close', onClick: () => {} }]).map(btn => 
+          `<button style="padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer;">${btn.text}</button>`
+        ).join('')}
+      </div>
+    `;
+    
+    dialog.appendChild(content);
+    document.body.appendChild(dialog);
+    
+    // Add click handlers
+    content.querySelectorAll('button').forEach((btn, index) => {
+      btn.addEventListener('click', () => {
+        if (options.buttons && options.buttons[index]) {
+          options.buttons[index].onClick();
+        }
+        document.body.removeChild(dialog);
+      });
+    });
+    
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        document.body.removeChild(dialog);
+      }
+    });
+  }
+
+  // Add CSS for animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
 </script>

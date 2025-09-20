@@ -36,22 +36,37 @@ app.use(express.static("public"));
 // Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-change-in-production',
-    resave: false,
-    saveUninitialized: true, // Creates a session for every visitor, which is needed for the security check.
+    resave: true, // Changed to true to refresh session on each request
+    saveUninitialized: false, // Changed to false for better security
+    rolling: true, // Reset expiration on each request
     store: process.env.MONGO_URI
         ? MongoStore.create({
             mongoUrl: process.env.MONGO_URI,
-            collectionName: 'sessions'
+            collectionName: 'sessions',
+            touchAfter: 24 * 3600, // lazy session update
+            ttl: 7 * 24 * 60 * 60 // 7 days
         })
         : undefined,
     cookie: {
-        // Session expires after 1 week.
-        maxAge: 1000 * 60 * 60 * 24 * 7
-    }
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        secure: false, // Set to true in production with HTTPS
+        httpOnly: true, // Prevent XSS attacks
+        sameSite: 'lax' // CSRF protection
+    },
+    name: 'user.sid' // Unique session name for user
 }));
 
 // Initialize passport (no passport.session() required for our short flow)
 app.use(passport.initialize());
+
+// Session refresh middleware - prevents premature logout
+app.use((req, res, next) => {
+    if (req.session && req.session.userId) {
+        // Refresh the session on each request to prevent timeout
+        req.session.touch();
+    }
+    next();
+});
 
 // configure Google strategy (only if env vars are present)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL) {
@@ -102,6 +117,23 @@ app.use(async (req, res, next) => {
     res.locals.currentYear = new Date().getFullYear();
     return next();
   }
+});
+
+// Session check endpoint
+app.get('/session-check', (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.status(401).json({ valid: false, message: 'No session' });
+    }
+    
+    User.findById(req.session.userId).then(user => {
+        if (user) {
+            req.session.touch(); // Refresh session
+            return res.json({ valid: true, message: 'Session valid' });
+        }
+        return res.status(403).json({ valid: false, message: 'User not found' });
+    }).catch(() => {
+        return res.status(500).json({ valid: false, message: 'Database error' });
+    });
 });
 
 // Use routes
