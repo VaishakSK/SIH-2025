@@ -7,6 +7,7 @@ const Report = require('../../models/report');
 const User = require('../../models/user');
 const dayjs = require('dayjs');
 const relativeTime = require('dayjs/plugin/relativeTime');
+const axios = require('axios');
 dayjs.extend(relativeTime);
 
 // uploads directory (served by app.js as /uploads) - using common uploads directory
@@ -35,6 +36,58 @@ const upload = multer({
 function countWords(text){ if (!text) return 0; return text.trim().split(/\s+/).filter(Boolean).length; }
 function titleWordsOk(title){ const n = (title||'').trim().split(/\s+/).filter(Boolean).length; return n>=1 && n<=10; }
 function descWordsOk(desc){ const n = countWords(desc||''); return n>=30 && n<=250; }
+
+// Severity scoring function
+async function getSeverityScore(description) {
+  try {
+    // Replace this URL with your actual severity scoring API endpoint
+    const apiUrl = process.env.SEVERITY_API_URL || 'https://api.example.com/severity-score';
+    
+    const response = await axios.post(apiUrl, {
+      text: description,
+      type: 'civic_issue'
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SEVERITY_API_KEY || 'demo-key'}`
+      },
+      timeout: 5000 // 5 second timeout
+    });
+
+    // Extract severity score from response (adjust based on your API response format)
+    const severityScore = response.data.severity_score || response.data.score || null;
+    
+    // Ensure score is between 0-10
+    if (severityScore !== null && severityScore >= 0 && severityScore <= 10) {
+      return Math.round(severityScore * 10) / 10; // Round to 1 decimal place
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Severity scoring API error:', error.message);
+    // Return a default score based on keywords if API fails
+    return getDefaultSeverityScore(description);
+  }
+}
+
+// Fallback severity scoring based on keywords
+function getDefaultSeverityScore(description) {
+  const text = description.toLowerCase();
+  let score = 5; // Default medium severity
+  
+  // High severity keywords
+  const highSeverityKeywords = ['emergency', 'urgent', 'dangerous', 'hazard', 'accident', 'injury', 'fire', 'flood', 'collapse', 'critical', 'life-threatening'];
+  // Low severity keywords  
+  const lowSeverityKeywords = ['minor', 'small', 'cosmetic', 'aesthetic', 'maintenance', 'routine', 'cleanup', 'beautification'];
+  
+  const highCount = highSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+  const lowCount = lowSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+  
+  if (highCount > 0) score = Math.min(10, 7 + highCount);
+  if (lowCount > 0) score = Math.max(0, 3 - lowCount);
+  
+  return score;
+}
 
 // GET choose page
 router.get('/report', (req, res) => {
@@ -86,6 +139,9 @@ router.post('/report/capture', express.urlencoded({ extended: true, limit: '10mb
     fs.writeFileSync(filePath, buffer);
     const relUrl = path.posix.join('/uploads/user', filename);
 
+    // Get severity score from API
+    const severityScore = await getSeverityScore(description);
+
     const rpt = new Report({
       user: req.session.userId,
       title: title.trim(),
@@ -94,6 +150,7 @@ router.post('/report/capture', express.urlencoded({ extended: true, limit: '10mb
       address: address.trim(),
       locationText: locationText ? locationText.trim() : '',
       description,
+      severityScore,
       geoLocation: {
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null
@@ -124,6 +181,10 @@ router.post('/report/upload', upload.single('photo'), async (req, res) => {
     if (!address || !address.trim()) { fs.unlinkSync(req.file.path); return res.status(400).send('Address required'); }
 
     const relPath = path.posix.join('/uploads/user', path.basename(req.file.path));
+    
+    // Get severity score from API
+    const severityScore = await getSeverityScore(description);
+    
     const rpt = new Report({
       user: req.session.userId,
       title: title.trim(),
@@ -132,6 +193,7 @@ router.post('/report/upload', upload.single('photo'), async (req, res) => {
       address: address.trim(),
       locationText: locationText ? locationText.trim() : '',
       description,
+      severityScore,
       geoLocation: {
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null
@@ -269,6 +331,9 @@ router.post('/report/upload-complete', express.urlencoded({ extended: true, limi
     const finalAddress = (postedAddress && postedAddress.trim()) ? postedAddress.trim() : (draft.address || '');
     if (!finalAddress) return res.status(400).send('Address required');
 
+    // Get severity score from API
+    const severityScore = await getSeverityScore(description);
+
     const rpt = new Report({
       user: req.session.userId,
       title: title.trim(),
@@ -277,6 +342,7 @@ router.post('/report/upload-complete', express.urlencoded({ extended: true, limi
       address: finalAddress,
       locationText: draft.locationText || finalAddress,
       description: description,
+      severityScore,
       geoLocation: {
         latitude: draft.latitude !== undefined ? draft.latitude : null,
         longitude: draft.longitude !== undefined ? draft.longitude : null
@@ -423,6 +489,10 @@ router.post('/reports/:id/edit', upload.single('photo'), async (req, res) => {
     report.address = address.trim();
     report.locationText = locationText ? locationText.trim() : '';
     report.description = description.trim();
+    
+    // Recalculate severity score if description changed
+    const severityScore = await getSeverityScore(description.trim());
+    report.severityScore = severityScore;
 
     // Handle file upload
     if (req.file) {

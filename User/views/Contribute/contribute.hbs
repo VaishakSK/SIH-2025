@@ -126,12 +126,23 @@
             </select>
           </div>
           <div class="filter-group">
+            <label for="severity"><i class="fas fa-exclamation-triangle"></i> Severity</label>
+            <select id="severity" name="severity">
+              <option value="all" {{#if (eq filters.severity "all")}}selected{{/if}}>All Severity Levels</option>
+              <option value="high" {{#if (eq filters.severity "high")}}selected{{/if}}>High (8-10)</option>
+              <option value="medium-high" {{#if (eq filters.severity "medium-high")}}selected{{/if}}>Medium-High (6-7.9)</option>
+              <option value="medium" {{#if (eq filters.severity "medium")}}selected{{/if}}>Medium (4-5.9)</option>
+              <option value="low" {{#if (eq filters.severity "low")}}selected{{/if}}>Low (0-3.9)</option>
+            </select>
+          </div>
+          <div class="filter-group">
             <label for="sort"><i class="fas fa-sort"></i> Sort By</label>
             <select id="sort" name="sort">
               <option value="newest" {{#if (eq filters.sort "newest")}}selected{{/if}}>Newest First</option>
               <option value="oldest" {{#if (eq filters.sort "oldest")}}selected{{/if}}>Oldest First</option>
               <option value="department" {{#if (eq filters.sort "department")}}selected{{/if}}>Department</option>
               <option value="location" {{#if (eq filters.sort "location")}}selected{{/if}}>Location</option>
+              <option value="severity" {{#if (eq filters.sort "severity")}}selected{{/if}}>Severity (High to Low)</option>
             </select>
           </div>
           <div class="filter-group">
@@ -158,6 +169,11 @@
                 <span><i class="fas fa-map-marker-alt"></i> {{this.address}}</span>
                 <span><i class="fas fa-calendar"></i> {{this.createdAtFormatted}}</span>
                 <span><i class="fas fa-user"></i> {{this.reporter}}</span>
+                {{#if this.severityScore}}
+                  <span class="severity-score" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: 600; {{#if (gte this.severityScore 8)}}background: #fee2e2; color: #b91c1c;{{else if (gte this.severityScore 6)}}background: #fef3c7; color: #92400e;{{else if (gte this.severityScore 4)}}background: #dbeafe; color: #1e3a8a;{{else}}background: #dcfce7; color: #166534;{{/if}}">
+                    <i class="fas fa-exclamation-triangle"></i> {{this.severityScore}}/10
+                  </span>
+                {{/if}}
               </div>
               <div class="card-description">{{this.description}}</div>
               <div class="card-actions">

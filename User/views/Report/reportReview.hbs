@@ -357,7 +357,11 @@
                                 </div>
                             </div>
                             <div class="actions" style="justify-content: flex-start; margin-top: 12px;">
+<<<<<<< HEAD
                                 <button id="generateDescriptionBtn" class="btn" type="button" style="background-color: #0ea5a4; color: white">Generate Description</button>
+=======
+                                <button class="btn" type="button" id="generateDescriptionBtn" style="background-color: #0ea5a4; color: white">Generate Description</button>
+>>>>>>> 0d1f337e923125469e891061c3da6867ba0b3959
                                 <div id="loadingIndicator" class="hidden" style="margin-left: 10px;">
                                     <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -367,6 +371,18 @@
                                 <div id="responseMessage" class="muted hidden" style="margin-left: 10px; color: var(--danger);"></div>
                                 <div id="autoGenStatus" class="muted" style="margin-left: 10px; font-size: 12px; display: none;">
                                     🤖 Auto-generating description...
+                                </div>
+                            </div>
+                            
+                            <!-- Severity Score Display -->
+                            <div id="severityScoreContainer" class="severity-score" style="margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #06b6d4;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 600; color: #1e293b;">Severity Score:</span>
+                                    <span id="severityScoreValue" style="font-weight: 700; color: #06b6d4;">{{}}</span>
+                                    <span style="font-size: 12px; color: #64748b;">/ 10</span>
+                                </div>
+                                <div id="severityScoreLabel" style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                                    Analyzing description...
                                 </div>
                             </div>
                         </div>
@@ -414,6 +430,8 @@
             const generateDescriptionBtn = document.getElementById('generateDescriptionBtn');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const responseMessage = document.getElementById('responseMessage');
+            const severityScoreValue = document.getElementById('severityScoreValue');
+            const severityScoreLabel = document.getElementById('severityScoreLabel');
 
             // Check if required elements exist
             if (!generateDescriptionBtn) {
@@ -445,12 +463,65 @@
             }
 
             desc.addEventListener('input', updateWordCount);
+            desc.addEventListener('input', updateSeverityScore);
             updateWordCount();
+            updateSeverityScore();
 
             function titleWordCheck() {
                 const words = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
                 if (words > 10) titleInput.setCustomValidity('Title must be 1–10 words');
                 else titleInput.setCustomValidity('');
+            }
+
+            // Severity score calculation function
+            function calculateSeverityScore(description) {
+                if (!description || description.trim().length < 30) {
+                    return null;
+                }
+
+                const text = description.toLowerCase();
+                let score = 5; // Default medium severity
+                
+                // High severity keywords
+                const highSeverityKeywords = ['emergency', 'urgent', 'dangerous', 'hazard', 'accident', 'injury', 'fire', 'flood', 'collapse', 'critical', 'life-threatening', 'blocking', 'broken', 'damaged', 'unsafe'];
+                // Low severity keywords  
+                const lowSeverityKeywords = ['minor', 'small', 'cosmetic', 'aesthetic', 'maintenance', 'routine', 'cleanup', 'beautification', 'improvement', 'enhancement'];
+                
+                const highCount = highSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+                const lowCount = lowSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+                
+                if (highCount > 0) score = Math.min(10, 7 + highCount * 0.5);
+                if (lowCount > 0) score = Math.max(0, 3 - lowCount * 0.5);
+                
+                return Math.round(score * 10) / 10;
+            }
+
+            function updateSeverityScore() {
+                const score = calculateSeverityScore(desc.value);
+                
+                if (score === null) {
+                    severityScoreValue.textContent = '--';
+                    severityScoreLabel.textContent = 'Enter at least 30 words to analyze severity';
+                    return;
+                }
+
+                severityScoreValue.textContent = score;
+                
+                // Update color based on severity
+                const container = document.getElementById('severityScoreContainer');
+                if (score >= 8) {
+                    container.style.borderLeftColor = '#ef4444'; // Red for high severity
+                    severityScoreLabel.textContent = 'High Severity - Requires immediate attention';
+                } else if (score >= 6) {
+                    container.style.borderLeftColor = '#f59e0b'; // Orange for medium-high severity
+                    severityScoreLabel.textContent = 'Medium-High Severity - Should be addressed soon';
+                } else if (score >= 4) {
+                    container.style.borderLeftColor = '#06b6d4'; // Blue for medium severity
+                    severityScoreLabel.textContent = 'Medium Severity - Standard priority';
+                } else {
+                    container.style.borderLeftColor = '#10b981'; // Green for low severity
+                    severityScoreLabel.textContent = 'Low Severity - Routine maintenance';
+                }
             }
             titleInput.addEventListener('input', titleWordCheck);
             titleWordCheck();
