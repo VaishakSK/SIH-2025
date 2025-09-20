@@ -6,6 +6,23 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Review Report • CivicConnect</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Try to load Google Maps API with error handling
+        function loadGoogleMapsAPI() {
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyB1EAA1oEqJcibMYus_CKa_I3b0et2uceY&libraries=places&callback=initGoogleMaps';
+            script.async = true;
+            script.defer = true;
+            script.onerror = function() {
+                console.error('Failed to load Google Maps API');
+                window.googleMapsLoadError = true;
+            };
+            document.head.appendChild(script);
+        }
+        
+        // Load the API
+        loadGoogleMapsAPI();
+    </script>
     <style>
         :root {
             --bg1: #f0f4f8;
@@ -240,6 +257,43 @@
                 order: 2
             }
         }
+
+        /* Google Places Autocomplete Styling */
+        .pac-container {
+            background-color: #fff;
+            border: 1px solid rgba(7, 16, 35, 0.06);
+            border-radius: 10px;
+            box-shadow: 0 12px 40px rgba(2, 6, 23, 0.06);
+            font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+            margin-top: 4px;
+            z-index: 1000;
+        }
+
+        .pac-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(7, 16, 35, 0.04);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .pac-item:last-child {
+            border-bottom: none;
+        }
+
+        .pac-item:hover,
+        .pac-item-selected {
+            background-color: rgba(6, 182, 212, 0.06);
+        }
+
+        .pac-item-query {
+            font-weight: 700;
+            color: #071023;
+        }
+
+        .pac-matched {
+            font-weight: 700;
+            color: var(--accent);
+        }
     </style>
 </head>
 
@@ -270,7 +324,7 @@
                         <div class="col">
                             <label>Captured Photo</label>
                             <div class="drop" role="img" aria-label="Captured photo">
-                                <img id="reviewImage" class="preview-img" alt="Uploaded preview" src="{{#if draft.imagePath}}{{draft.imagePath}}{{else}}/emblem.jpeg{{/if}}">
+                                <img id="reviewImage" class="preview-img" alt="Uploaded preview" src="{{#if draft.imagePath}}{{draft.imagePath}}{{else}}/logo-fina;.png{{/if}}">
                             </div>
                         </div>
 
@@ -288,7 +342,8 @@
 
                         <div class="col">
                             <label for="address">Address (exact)</label>
-                            <input id="address" name="address" type="text" required value="{{#if draft.address}}{{draft.address}}{{else}}123 Main Street{{/if}}">
+                            <input id="address" name="address" type="text" required value="{{#if draft.address}}{{draft.address}}{{else}}123 Main Street{{/if}}" placeholder="Start typing to see address suggestions...">
+                            <div class="muted" style="margin-top:6px">Address suggestions will appear as you type</div>
                         </div>
 
                         <div class="col">
@@ -323,8 +378,8 @@
 
             <aside class="side">
                 <div class="card">
-                    <img src="/emblem.jpeg" alt="Emblem"
-                        style="width: 100%; height: auto; display: block; border-radius: 8px;">
+                    <img src="/emblem.jpeg" alt="CivicConnect Logo"
+                        style="width: 100%; height: auto; display: block; border-radius: 8px; background-color: #f0f0f0;">
                 </div>
 
                 <div class="card">
@@ -425,7 +480,7 @@
             // Function to detect department from image
             async function detectDepartmentFromImage() {
                 const imageUrl = reviewImage.src;
-                if (!imageUrl || imageUrl === window.location.origin + '/emblem.jpeg') {
+                if (!imageUrl || imageUrl === window.location.origin + '/logo-fina;.png') {
                     return null;
                 }
 
@@ -521,7 +576,7 @@ Return only the department code, nothing else.`;
 
             generateDescriptionBtn.addEventListener('click', async () => {
                 const imageUrl = reviewImage.src;
-                if (!imageUrl || imageUrl === window.location.origin + '/emblem.jpeg') {
+                if (!imageUrl || imageUrl === window.location.origin + '/logo-fina;.png') {
                     showResponse('No image available to analyze. Please upload a photo first.', true);
                     return;
                 }
@@ -623,6 +678,228 @@ Return only the department code, nothing else.`;
             });
 
             // Department is now auto-detected from image using AI
+
+            // Global variable to track autocomplete status
+            let autocompleteInitialized = false;
+            let autocompleteError = false;
+
+            // Initialize Google Places Autocomplete
+            function initializeAutocomplete() {
+                const addressInput = document.getElementById('address');
+                
+                if (!addressInput) {
+                    console.log('Address input not found');
+                    return;
+                }
+
+                try {
+                    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                        const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                            types: ['address', 'establishment'],
+                            componentRestrictions: { country: 'in' }, // Restrict to India
+                            fields: ['formatted_address', 'geometry', 'name', 'place_id']
+                        });
+
+                        autocomplete.addListener('place_changed', function() {
+                            const place = autocomplete.getPlace();
+                            
+                            if (!place.geometry || !place.geometry.location) {
+                                console.log("No details available for input: '" + place.name + "'");
+                                return;
+                            }
+
+                            // Update the address field with the formatted address
+                            addressInput.value = place.formatted_address;
+                            
+                            // You can also extract additional information if needed
+                            console.log('Selected place:', place);
+                        });
+
+                        autocompleteInitialized = true;
+                        console.log('Google Places Autocomplete initialized successfully');
+                        
+                        // Update UI to show autocomplete is working
+                        const helpText = addressInput.parentNode.querySelector('.muted');
+                        if (helpText) {
+                            helpText.textContent = 'Address suggestions are now active';
+                            helpText.style.color = 'var(--accent)';
+                        }
+                        
+                    } else {
+                        throw new Error('Google Maps API not available');
+                    }
+                } catch (error) {
+                    console.error('Error initializing Google Places Autocomplete:', error);
+                    autocompleteError = true;
+                    
+                    // Update UI to show autocomplete is not available
+                    const helpText = addressInput.parentNode.querySelector('.muted');
+                    if (helpText) {
+                        helpText.textContent = 'Address suggestions unavailable - please enter address manually';
+                        helpText.style.color = 'var(--muted)';
+                    }
+                }
+            }
+
+            // Fallback autocomplete using a simple local approach
+            function initializeFallbackAutocomplete() {
+                const addressInput = document.getElementById('address');
+                if (!addressInput) return;
+
+                // Create a simple dropdown for suggestions
+                const dropdown = document.createElement('div');
+                dropdown.id = 'address-suggestions';
+                dropdown.style.cssText = `
+                    position: absolute;
+                    background: white;
+                    border: 1px solid rgba(7, 16, 35, 0.06);
+                    border-radius: 10px;
+                    box-shadow: 0 12px 40px rgba(2, 6, 23, 0.06);
+                    max-height: 200px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                    display: none;
+                    width: 100%;
+                    margin-top: 4px;
+                `;
+
+                // Insert dropdown after the address input
+                addressInput.parentNode.style.position = 'relative';
+                addressInput.parentNode.appendChild(dropdown);
+
+                // Common Indian addresses for suggestions
+                const commonAddresses = [
+                    'Main Road, Mumbai, Maharashtra',
+                    'Park Street, Kolkata, West Bengal',
+                    'MG Road, Bangalore, Karnataka',
+                    'Connaught Place, New Delhi, Delhi',
+                    'Marine Drive, Mumbai, Maharashtra',
+                    'Juhu Beach, Mumbai, Maharashtra',
+                    'Lalbagh, Bangalore, Karnataka',
+                    'India Gate, New Delhi, Delhi',
+                    'Charminar, Hyderabad, Telangana',
+                    'Gateway of India, Mumbai, Maharashtra',
+                    'Brigade Road, Bangalore, Karnataka',
+                    'Commercial Street, Bangalore, Karnataka',
+                    'Chandni Chowk, New Delhi, Delhi',
+                    'Karol Bagh, New Delhi, Delhi',
+                    'Lajpat Nagar, New Delhi, Delhi',
+                    'Sarojini Nagar, New Delhi, Delhi',
+                    'Colaba Causeway, Mumbai, Maharashtra',
+                    'Bandra West, Mumbai, Maharashtra',
+                    'Andheri West, Mumbai, Maharashtra',
+                    'Powai, Mumbai, Maharashtra'
+                ];
+
+                function showSuggestions(matches) {
+                    dropdown.innerHTML = '';
+                    
+                    if (matches.length === 0) {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+
+                    matches.slice(0, 5).forEach(match => {
+                        const item = document.createElement('div');
+                        item.style.cssText = `
+                            padding: 12px;
+                            cursor: pointer;
+                            border-bottom: 1px solid rgba(7, 16, 35, 0.04);
+                            font-size: 14px;
+                        `;
+                        item.textContent = match;
+                        
+                        item.addEventListener('mouseenter', function() {
+                            this.style.backgroundColor = 'rgba(6, 182, 212, 0.06)';
+                        });
+                        
+                        item.addEventListener('mouseleave', function() {
+                            this.style.backgroundColor = 'transparent';
+                        });
+                        
+                        item.addEventListener('click', function() {
+                            addressInput.value = match;
+                            dropdown.style.display = 'none';
+                        });
+                        
+                        dropdown.appendChild(item);
+                    });
+                    
+                    dropdown.style.display = 'block';
+                }
+
+                addressInput.addEventListener('input', function() {
+                    const value = this.value.toLowerCase();
+                    
+                    if (value.length < 2) {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+
+                    const matches = commonAddresses.filter(addr => 
+                        addr.toLowerCase().includes(value)
+                    );
+
+                    showSuggestions(matches);
+                });
+
+                // Hide dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!addressInput.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+
+                // Update help text
+                const helpText = addressInput.parentNode.querySelector('.muted');
+                if (helpText) {
+                    helpText.textContent = 'Basic address suggestions available';
+                    helpText.style.color = 'var(--muted)';
+                }
+            }
+
+            // Global callback function for Google Maps API
+            window.initGoogleMaps = function() {
+                console.log('Google Maps API loaded successfully');
+                initializeAutocomplete();
+            };
+
+            // Error handler for Google Maps API
+            window.gm_authFailure = function() {
+                console.error('Google Maps API authentication failed');
+                autocompleteError = true;
+                initializeFallbackAutocomplete();
+            };
+
+            // Check for Google Maps load error and initialize fallback
+            function checkGoogleMapsStatus() {
+                if (window.googleMapsLoadError) {
+                    console.log('Google Maps API failed to load - using fallback');
+                    initializeFallbackAutocomplete();
+                    return;
+                }
+                
+                if (!autocompleteInitialized && !autocompleteError) {
+                    // Check if Google Maps is available
+                    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                        initializeAutocomplete();
+                    } else {
+                        // Wait a bit more and try again
+                        setTimeout(checkGoogleMapsStatus, 1000);
+                    }
+                }
+            }
+
+            // Start checking for Google Maps status
+            setTimeout(checkGoogleMapsStatus, 2000);
+
+            // Final fallback - if nothing works after 8 seconds
+            setTimeout(function() {
+                if (!autocompleteInitialized && !autocompleteError) {
+                    console.log('Google Maps API loading timeout - initializing fallback');
+                    initializeFallbackAutocomplete();
+                }
+            }, 8000);
         })();
     </script>
     {{> footer}}
