@@ -95,9 +95,14 @@ app.use(async (req, res, next) => {
     res.locals.siteName = 'CivicConnect';
     res.locals.currentUser = null;
     res.locals.currentYear = new Date().getFullYear(); // provide year for footer
+    res.locals.userStats = {
+      reportsCount: 0,
+      contributionsCount: 0,
+      memberSince: 'N/A'
+    };
 
     if (req.session && req.session.userId) {
-      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId avatarUrl').lean();
+      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId avatarUrl createdAt').lean();
       if (user) {
         res.locals.currentUser = {
           id: user._id,
@@ -108,6 +113,25 @@ app.use(async (req, res, next) => {
           googleId: user.googleId || null,
           avatarUrl: user.avatarUrl || ''
         };
+
+        // Calculate user stats for footer
+        try {
+          const Report = require('./models/report');
+          const Contribution = require('./models/contribution');
+          
+          const reportsCount = await Report.countDocuments({ user: user._id });
+          const contributionsCount = await Contribution.countDocuments({ user: user._id });
+          const memberSince = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+          
+          res.locals.userStats = {
+            reportsCount,
+            contributionsCount,
+            memberSince
+          };
+        } catch (statsErr) {
+          // If models don't exist or query fails, keep default stats
+          console.log('Could not load user stats:', statsErr.message);
+        }
       }
     }
     return next();
@@ -115,6 +139,11 @@ app.use(async (req, res, next) => {
     console.error('Failed to populate currentUser for views:', err);
     res.locals.currentUser = null;
     res.locals.currentYear = new Date().getFullYear();
+    res.locals.userStats = {
+      reportsCount: 0,
+      contributionsCount: 0,
+      memberSince: 'N/A'
+    };
     return next();
   }
 });

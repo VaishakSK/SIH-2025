@@ -59,7 +59,7 @@ router.post('/settings/profile', upload.single('avatar'), async (req, res) => {
 
         // if avatar uploaded, set public URL
         if (req.file) {
-            const publicUrl = '/uploads/' + req.file.filename;
+            const publicUrl = '/uploads/user/' + req.file.filename;
             user.avatarUrl = publicUrl;
         }
 
