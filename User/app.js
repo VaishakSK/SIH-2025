@@ -22,12 +22,37 @@ const logoutRoutes = require('./routes/AuthRoutes/logout'); // added
 const dashboardRoutes = require('./routes/Dashboard/dashboard');
 const settingsRoutes = require('./routes/Settings/settings');
 const contributeRoutes = require('./routes/Contribute/contribute');
+const geocodingRoutes = require('./routes/geocoding');
 
 const app = express();
 
-// Middlewar
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Security headers to fix TrustedScript issues
+app.use((req, res, next) => {
+    // Set Content Security Policy to allow inline scripts, Google OAuth, and upload functionality
+    res.setHeader('Content-Security-Policy', 
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://developers.google.com https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://maps.googleapis.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " +
+        "font-src 'self' https://fonts.gstatic.com; " +
+        "img-src 'self' data: blob: https: http:; " +
+        "connect-src 'self' https://accounts.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://maps.googleapis.com; " +
+        "frame-src 'self' https://accounts.google.com https://maps.google.com; " +
+        "object-src 'none'; " +
+        "base-uri 'self';"
+    );
+    
+    // Set other security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    next();
+});
 
 // Serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -174,6 +199,7 @@ app.use('/auth', logoutRoutes); // added
 app.use('/', dashboardRoutes);
 app.use('/', settingsRoutes);
 app.use('/', contributeRoutes);
+app.use('/api/geocoding', geocodingRoutes);
 
 // Add redirect so /login works
 app.get('/login', (req, res) => {

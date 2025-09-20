@@ -357,7 +357,7 @@
                                 </div>
                             </div>
                             <div class="actions" style="justify-content: flex-start; margin-top: 12px;">
-                                <button class="btn" type="button" style="background-color: #0ea5a4; color: white">Generate Description</button>
+                                <button id="generateDescriptionBtn" class="btn" type="button" style="background-color: #0ea5a4; color: white">Generate Description</button>
                                 <div id="loadingIndicator" class="hidden" style="margin-left: 10px;">
                                     <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -414,6 +414,20 @@
             const generateDescriptionBtn = document.getElementById('generateDescriptionBtn');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const responseMessage = document.getElementById('responseMessage');
+
+            // Check if required elements exist
+            if (!generateDescriptionBtn) {
+                console.error('Generate Description button not found');
+                return;
+            }
+            if (!loadingIndicator) {
+                console.error('Loading indicator not found');
+                return;
+            }
+            if (!responseMessage) {
+                console.error('Response message element not found');
+                return;
+            }
 
             function countWords(text) {
                 if (!text) return 0;
@@ -472,13 +486,17 @@
             const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
 
             function showResponse(message, isError = false) {
-                responseMessage.textContent = message;
-                responseMessage.classList.remove('hidden');
-                responseMessage.style.color = isError ? 'var(--danger)' : 'var(--muted)';
+                if (responseMessage) {
+                    responseMessage.textContent = message;
+                    responseMessage.classList.remove('hidden');
+                    responseMessage.style.color = isError ? 'var(--danger)' : 'var(--muted)';
+                }
             }
 
             function hideResponse() {
-                responseMessage.classList.add('hidden');
+                if (responseMessage) {
+                    responseMessage.classList.add('hidden');
+                }
             }
 
             // Function to detect department from image
@@ -635,8 +653,9 @@ Return only the department code, nothing else.`;
                 if (!desc.value.trim()) desc.value = '';
                 if (!titleInput.value.trim()) titleInput.value = '';
                 
-                generateDescriptionBtn.disabled = true;
-                loadingIndicator.classList.remove('hidden');
+                // Safely disable button and show loading
+                if (generateDescriptionBtn) generateDescriptionBtn.disabled = true;
+                if (loadingIndicator) loadingIndicator.classList.remove('hidden');
                 hideResponse();
 
                 const prompt = `Analyze the image for any civic issues (e.g., waste, potholes, broken infrastructure, flooding, unmaintained public spaces). Provide a concise title (under 10 words) and a description (30-250 words) related to the civic issues depicted. Return the response as a JSON object with 'title' and 'description' keys. For example: { "title": "Pothole on Main Street", "description": "..." };`;
@@ -706,8 +725,9 @@ Return only the department code, nothing else.`;
                     console.error('Error generating content:', error);
                     showResponse('An error occurred while generating the description. Please try again.', true);
                 } finally {
-                    generateDescriptionBtn.disabled = false;
-                    loadingIndicator.classList.add('hidden');
+                    // Safely re-enable button and hide loading
+                    if (generateDescriptionBtn) generateDescriptionBtn.disabled = false;
+                    if (loadingIndicator) loadingIndicator.classList.add('hidden');
                 }
             }
 

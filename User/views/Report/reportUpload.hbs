@@ -703,7 +703,7 @@
         // Get human-readable address
         try {
           locationStatus.textContent = '📍 Getting address...';
-          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(position.coords.latitude)}&lon=${encodeURIComponent(position.coords.longitude)}&addressdetails=1`;
+          const url = `/api/geocoding/reverse?lat=${encodeURIComponent(position.coords.latitude)}&lon=${encodeURIComponent(position.coords.longitude)}`;
           const response = await fetch(url);
           if (response.ok) {
             const data = await response.json();
