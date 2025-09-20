@@ -357,11 +357,7 @@
                                 </div>
                             </div>
                             <div class="actions" style="justify-content: flex-start; margin-top: 12px;">
-<<<<<<< HEAD
                                 <button id="generateDescriptionBtn" class="btn" type="button" style="background-color: #0ea5a4; color: white">Generate Description</button>
-=======
-                                <button class="btn" type="button" id="generateDescriptionBtn" style="background-color: #0ea5a4; color: white">Generate Description</button>
->>>>>>> 0d1f337e923125469e891061c3da6867ba0b3959
                                 <div id="loadingIndicator" class="hidden" style="margin-left: 10px;">
                                     <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -378,7 +374,7 @@
                             <div id="severityScoreContainer" class="severity-score" style="margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #06b6d4;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="font-weight: 600; color: #1e293b;">Severity Score:</span>
-                                    <span id="severityScoreValue" style="font-weight: 700; color: #06b6d4;">{{}}</span>
+                                    <span id="severityScoreValue" style="font-weight: 700; color: #06b6d4;">{{severityScoreValue}}</span>
                                     <span style="font-size: 12px; color: #64748b;">/ 10</span>
                                 </div>
                                 <div id="severityScoreLabel" style="font-size: 12px; color: #64748b; margin-top: 4px;">
@@ -446,6 +442,12 @@
                 console.error('Response message element not found');
                 return;
             }
+            if (!severityScoreValue) {
+                console.error('Severity score value element not found');
+            }
+            if (!severityScoreLabel) {
+                console.error('Severity score label element not found');
+            }
 
             function countWords(text) {
                 if (!text) return 0;
@@ -460,12 +462,20 @@
                 const pct = Math.max(0, Math.min(100, Math.round(((n - min) / (max - min)) * 100)));
                 wcProgress.style.width = pct + '%';
                 wcProgress.style.background = (n < min || n > max) ? 'linear-gradient(90deg,var(--danger),#ff7b7b)' : 'linear-gradient(90deg,var(--accent),var(--accent-2))';
+                
+                // Update severity score if elements exist
+                if (severityScoreValue && severityScoreLabel) {
+                    updateSeverityScore();
+                }
             }
 
             desc.addEventListener('input', updateWordCount);
-            desc.addEventListener('input', updateSeverityScore);
             updateWordCount();
-            updateSeverityScore();
+            
+            // Only call updateSeverityScore if elements exist
+            if (severityScoreValue && severityScoreLabel) {
+                updateSeverityScore();
+            }
 
             function titleWordCheck() {
                 const words = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
@@ -497,6 +507,12 @@
             }
 
             function updateSeverityScore() {
+                // Check if severity score elements exist
+                if (!severityScoreValue || !severityScoreLabel) {
+                    console.log('Severity score elements not found, skipping update');
+                    return;
+                }
+
                 const score = calculateSeverityScore(desc.value);
                 
                 if (score === null) {
@@ -509,18 +525,20 @@
                 
                 // Update color based on severity
                 const container = document.getElementById('severityScoreContainer');
-                if (score >= 8) {
-                    container.style.borderLeftColor = '#ef4444'; // Red for high severity
-                    severityScoreLabel.textContent = 'High Severity - Requires immediate attention';
-                } else if (score >= 6) {
-                    container.style.borderLeftColor = '#f59e0b'; // Orange for medium-high severity
-                    severityScoreLabel.textContent = 'Medium-High Severity - Should be addressed soon';
-                } else if (score >= 4) {
-                    container.style.borderLeftColor = '#06b6d4'; // Blue for medium severity
-                    severityScoreLabel.textContent = 'Medium Severity - Standard priority';
-                } else {
-                    container.style.borderLeftColor = '#10b981'; // Green for low severity
-                    severityScoreLabel.textContent = 'Low Severity - Routine maintenance';
+                if (container) {
+                    if (score >= 8) {
+                        container.style.borderLeftColor = '#ef4444'; // Red for high severity
+                        severityScoreLabel.textContent = 'High Severity - Requires immediate attention';
+                    } else if (score >= 6) {
+                        container.style.borderLeftColor = '#f59e0b'; // Orange for medium-high severity
+                        severityScoreLabel.textContent = 'Medium-High Severity - Should be addressed soon';
+                    } else if (score >= 4) {
+                        container.style.borderLeftColor = '#06b6d4'; // Blue for medium severity
+                        severityScoreLabel.textContent = 'Medium Severity - Standard priority';
+                    } else {
+                        container.style.borderLeftColor = '#10b981'; // Green for low severity
+                        severityScoreLabel.textContent = 'Low Severity - Routine maintenance';
+                    }
                 }
             }
             titleInput.addEventListener('input', titleWordCheck);

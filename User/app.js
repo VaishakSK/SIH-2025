@@ -36,8 +36,8 @@ app.use((req, res, next) => {
     res.setHeader('Content-Security-Policy', 
         "default-src 'self'; " +
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://developers.google.com https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://maps.googleapis.com; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " +
-        "font-src 'self' https://fonts.gstatic.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; " +
+        "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
         "img-src 'self' data: blob: https: http:; " +
         "connect-src 'self' https://accounts.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://maps.googleapis.com; " +
         "frame-src 'self' https://accounts.google.com https://maps.google.com; " +
@@ -110,6 +110,23 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
 // Set view engine to handlebars
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
+
+// Register Handlebars helpers
+hbs.registerHelper('gte', function(a, b) {
+    return a >= b;
+});
+
+hbs.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+
+hbs.registerHelper('lt', function(a, b) {
+    return a < b;
+});
+
+hbs.registerHelper('lte', function(a, b) {
+    return a <= b;
+});
 
 // register partials directory for header/footer
 hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
