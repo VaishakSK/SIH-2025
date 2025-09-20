@@ -6,8 +6,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// configure multer storage for avatars
-const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+// configure multer storage for avatars - using common uploads directory
+const uploadDir = path.join(__dirname, '..', '..', '..', 'uploads', 'user');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }

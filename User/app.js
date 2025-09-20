@@ -119,8 +119,8 @@ app.get('/login', (req, res) => {
     return res.redirect('/auth/login');
 });
 
-// serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// serve uploaded files from common uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 //helper functions
 hbs.registerHelper('eq', function (a, b) {

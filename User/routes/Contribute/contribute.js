@@ -7,8 +7,8 @@ const Report = require('../../models/report');
 const Contribution = require('../../models/contribution');
 const User = require('../../models/user');
 
-// Configure multer for multiple file uploads
-const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'contributions');
+// Configure multer for multiple file uploads - using common uploads directory
+const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'user', 'contributions');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }

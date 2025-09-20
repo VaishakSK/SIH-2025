@@ -9,8 +9,8 @@ const dayjs = require('dayjs');
 const relativeTime = require('dayjs/plugin/relativeTime');
 dayjs.extend(relativeTime);
 
-// uploads directory (served by app.js as /uploads)
-const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+// uploads directory (served by app.js as /uploads) - using common uploads directory
+const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'user');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // multer for browser upload
@@ -84,7 +84,7 @@ router.post('/report/capture', express.urlencoded({ extended: true, limit: '10mb
     const filename = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8) + ext;
     const filePath = path.join(uploadsDir, filename);
     fs.writeFileSync(filePath, buffer);
-    const relUrl = path.posix.join('/uploads', filename);
+    const relUrl = path.posix.join('/uploads/user', filename);
 
     const rpt = new Report({
       user: req.session.userId,
@@ -123,7 +123,7 @@ router.post('/report/upload', upload.single('photo'), async (req, res) => {
     if (!descWordsOk(description)) { fs.unlinkSync(req.file.path); return res.status(400).send('Description must be 30–250 words'); }
     if (!address || !address.trim()) { fs.unlinkSync(req.file.path); return res.status(400).send('Address required'); }
 
-    const relPath = path.posix.join('/uploads', path.basename(req.file.path));
+    const relPath = path.posix.join('/uploads/user', path.basename(req.file.path));
     const rpt = new Report({
       user: req.session.userId,
       title: title.trim(),
@@ -167,7 +167,7 @@ router.post('/report/upload-temp', upload.single('photo'), async (req, res) => {
 
     const { latitude, longitude, address, locationText } = req.body;
     const filename = path.basename(req.file.path);
-    const relPath = path.posix.join('/uploads', filename);
+    const relPath = path.posix.join('/uploads/user', filename);
 
     // store minimal draft in session
     req.session.tempReport = {
@@ -218,7 +218,7 @@ router.post('/report/capture-temp', express.urlencoded({ extended: true, limit: 
     const filename = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8) + ext;
     const filePath = path.join(uploadsDir, filename);
     fs.writeFileSync(filePath, buffer);
-    const relPath = path.posix.join('/uploads', filename);
+    const relPath = path.posix.join('/uploads/user', filename);
 
     // store minimal draft in session
     req.session.tempReport = {
@@ -398,7 +398,7 @@ router.post('/reports/:id/edit', upload.single('photo'), async (req, res) => {
           fs.unlinkSync(oldImagePath);
         }
       }
-      report.imagePath = path.posix.join('/uploads', req.file.filename);
+      report.imagePath = path.posix.join('/uploads/user', req.file.filename);
     }
 
     await report.save();

@@ -15,7 +15,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images from the uploads folder in admin under /uploads
+// Serve uploaded images from the common uploads directory under /uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Serve images from the images folder under /images
