@@ -53,6 +53,7 @@ router.get('/contribute', async (req, res) => {
       location, 
       search, 
       status = 'open',
+      severity = 'all',
       sort = 'newest',
       page = 1 
     } = req.query;
@@ -87,6 +88,24 @@ router.get('/contribute', async (req, res) => {
       query.status = status;
     }
 
+    // Add severity filter
+    if (severity && severity !== 'all') {
+      switch (severity) {
+        case 'high':
+          query.severityScore = { $gte: 8 };
+          break;
+        case 'medium-high':
+          query.severityScore = { $gte: 6, $lt: 8 };
+          break;
+        case 'medium':
+          query.severityScore = { $gte: 4, $lt: 6 };
+          break;
+        case 'low':
+          query.severityScore = { $lt: 4 };
+          break;
+      }
+    }
+
     // Build sort
     let sortQuery = {};
     switch (sort) {
@@ -98,6 +117,9 @@ router.get('/contribute', async (req, res) => {
         break;
       case 'location':
         sortQuery = { address: 1 };
+        break;
+      case 'severity':
+        sortQuery = { severityScore: -1 };
         break;
       default:
         sortQuery = { createdAt: -1 };
@@ -137,6 +159,7 @@ router.get('/contribute', async (req, res) => {
         location: location || '',
         search: search || '',
         status: status || 'all',
+        severity: severity || 'all',
         sort: sort || 'newest'
       },
       pagination: {

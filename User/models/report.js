@@ -51,6 +51,12 @@ const reportSchema = new mongoose.Schema({
       validator: wordCount,
       message: 'Description must be between 30 and 250 words'
     }
+  },
+  severityScore: {
+    type: Number,
+    min: 0,
+    max: 10,
+    default: null
   }
 }, {
   timestamps: true
