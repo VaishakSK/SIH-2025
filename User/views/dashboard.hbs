@@ -4,121 +4,622 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dashboard - CivicConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg-1: #0f172a;
-      --accent: #06b6d4;
-      --accent-2:#0ea5a4;
-      --muted:#94a3b8;
-      --radius:14px;
-      --shadow: 0 10px 30px rgba(2,6,23,0.12);
+    :root {
+      /* Professional Color Palette */
+      --primary: #4f46e5;
+      --primary-light: #6366f1;
+      --primary-dark: #3730a3;
+      --secondary: #64748b;
+      --secondary-light: #94a3b8;
+      --accent: #0ea5e9;
+      --accent-light: #38bdf8;
+      --success: #059669;
+      --success-light: #10b981;
+      --warning: #d97706;
+      --warning-light: #f59e0b;
+      --danger: #dc2626;
+      --danger-light: #ef4444;
+      
+      /* Background Colors */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --bg-tertiary: #e2e8f0;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --bg-card-hover: rgba(255, 255, 255, 0.95);
+      
+      /* Text Colors */
+      --text-primary: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      
+      /* Effects */
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(148, 163, 184, 0.3);
+      --shadow-primary: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-glow: 0 0 0 1px rgba(79, 70, 229, 0.1);
+      --shadow-glow-secondary: 0 0 0 1px rgba(100, 116, 139, 0.1);
+      
+      /* Spacing */
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --radius-2xl: 20px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Helvetica,Arial;background:
-      radial-gradient(1200px 400px at 10% 10%, rgba(6,182,212,0.04), transparent),
-      linear-gradient(180deg,#f5f7fb,#eef2f6);color:var(--bg-1)}
-    /* Full-screen layout */
-    .wrap{
-      width:100vw;
-      height:100vh;
-      display:flex;
-      align-items:stretch;
-      justify-content:center;
-      padding:20px;
-      gap:20px;
-    }
-
-    /* Make content span full width while keeping comfortable inner margins */
-    .grid-layout{
-      display:grid;
-      grid-template-columns:280px 1fr;
-      gap:22px;
-      align-items:start;
-      width:100%;
-      height:100%;
-      max-width:none;
-    }
-
-    /* Sidebar fills full height of viewport area inside the wrap */
-    .sidebar{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      padding:18px;
-      border-radius:var(--radius);
-      background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.94));
-      box-shadow:var(--shadow);
-      border:1px solid rgba(15,23,42,0.03);
-      height:100%;
-      overflow:auto;
-    }
-
-    .profile{display:flex;gap:12px;align-items:center}
-    .avatar{
-      width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#ecfeff,#dbeafe);
-      display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;font-size:22px;box-shadow:0 8px 20px rgba(6,182,212,0.06)
-    }
-    .userMeta .name{font-weight:800;font-size:16px}
-    .userMeta .email{font-size:13px;color:var(--muted);margin-top:4px}
-    .nav{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-    .nav a{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;color:var(--bg-1);text-decoration:none;font-weight:700}
-    .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 8px 22px rgba(14,165,164,0.12)}
-    .nav a:hover{background:#f1f9f8}
-    .sidebar .small{font-size:13px;color:var(--muted);margin-top:auto}
-
-    /* main area should fill height and scroll internally */
-    .main{
-      display:flex;
-      flex-direction:column;
-      gap:18px;
-      height:100%;
-      overflow:hidden;
-      border-radius:var(--radius);
-    }
-    .mainInner{
-      display:flex;
-      flex-direction:column;
-      padding:18px;
-      background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);
-      box-shadow:var(--shadow);
-      border:1px solid rgba(15,23,42,0.03);
-      height:100%;
-      overflow:auto;
-      border-radius:var(--radius);
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;background:transparent;padding-bottom:8px;z-index:2}
-    .title h1{margin:0;font-size:20px}
-    .sub{color:var(--muted);font-size:13px}
-    .controls{display:flex;gap:10px;align-items:center}
-    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:800}
-    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 10px 30px rgba(6,182,212,0.12)}
-    .btn-ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:var(--bg-1)}
-
-    /* stats - responsive */
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:6px}
-    .stat-card{border-radius:12px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.95),#fff);box-shadow: 0 12px 40px rgba(2,6,23,0.04);border:1px solid rgba(15,23,42,0.03)}
-    .stat-card .label{font-size:13px;color:var(--muted)}
-    .stat-card .value{font-size:26px;font-weight:900;margin-top:6px}
-    .panel{margin-top:6px;border-radius:12px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.98),#fff);box-shadow:0 12px 30px rgba(2,6,23,0.04);border:1px solid rgba(15,23,42,0.03)}
-    .report-list{display:flex;flex-direction:column;gap:10px}
-    .report-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid rgba(15,23,42,0.03);background:linear-gradient(180deg,rgba(255,255,255,0.98),transparent)}
-    .report-item .meta .title{font-weight:800}
-    .report-item .meta .sub{font-size:13px;color:var(--muted)}
-    .badge{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#ecfeff,#bbf7d0);color:#064e3b;font-weight:800}
-    .empty{color:var(--muted);padding:18px;text-align:center}
-    .pill{font-size:13px;color:var(--muted)}
-
-    @media (max-width:980px){
-      .grid-layout{grid-template-columns:1fr}
-      .stats{grid-template-columns:repeat(2,1fr)}
-      .wrap{padding:12px;gap:12px}
-      .sidebar{height:auto}
-      .main{height:auto}
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+      color: var(--text-primary);
+      overflow-x: hidden;
     }
-    @media (max-width:600px){
-      .stats{grid-template-columns:1fr}
-      .avatar{width:52px;height:52px;font-size:18px}
+
+    /* Subtle Background Pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.03) 0%, transparent 50%);
+      z-index: -1;
+    }
+
+    /* Main Layout */
+    .wrap {
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      gap: 24px;
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-2xl);
+      padding: 24px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-primary);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      font-size: 24px;
+      box-shadow: var(--shadow-primary);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+      position: relative;
+      z-index: 1;
+    }
+
+    .userMeta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .userMeta .name {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .userMeta .email {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-radius: var(--radius-lg);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav a span {
+      font-size: 18px;
+      opacity: 0.8;
+      transition: opacity 0.3s ease;
+    }
+
+    .nav a:hover span {
+      opacity: 1;
+    }
+
+    .nav a.active span {
+      opacity: 1;
+    }
+
+    .nav a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .nav a:hover::before {
+      left: 100%;
+    }
+
+    .nav a:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      transform: translateX(8px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav a.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: var(--shadow-glow);
+      transform: translateX(8px);
+    }
+
+    .nav a.active::before {
+      display: none;
+    }
+
+    .sidebar .small {
+      font-size: 13px;
+      color: white;
+      margin-top: auto;
+    }
+
+    /* Main Content */
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .mainInner {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-2xl);
+      padding: 32px;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .title h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .sub {
+      color: var(--text-secondary);
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .search {
+      padding: 12px 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .search::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: var(--radius-lg);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.2);
+      background: var(--primary-dark);
+    }
+
+    .btn-ghost {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+
+    /* Stats Cards */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .stat-card .label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .value {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .pill {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .panel h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+    .report-list, .issues {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .report-item, .issue {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .issue {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .issue .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .report-item::before, .issue::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--primary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .report-item:hover::before, .issue:hover::before {
+      opacity: 1;
+    }
+
+    .report-item:hover, .issue:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .report-item .meta .title, .issue .title {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .report-item .meta .sub, .muted-small {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .badge {
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge.status-open {
+      background: var(--warning);
+      color: white;
+    }
+
+    .badge.status-in_progress {
+      background: var(--accent);
+      color: white;
+    }
+
+    .badge.status-resolved {
+      background: var(--success);
+      color: white;
+    }
+
+    .chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 12px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .chip.status-open {
+      background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+      color: white;
+      border: 1px solid #ff6b6b;
+      box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    }
+
+    .empty {
+      color: var(--text-muted);
+      padding: 40px;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .grid-layout {
+        grid-template-columns: 280px 1fr;
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .grid-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .sidebar {
+        position: static;
+        order: 2;
+      }
+      
+      .main {
+        order: 1;
+      }
+      
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .wrap {
+        padding: 16px;
+      }
+      
+      .stats {
+        grid-template-columns: 1fr;
+      }
+      
+      .topbar {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+      }
+      
+      .controls {
+        justify-content: center;
+      }
+      
+      .title h1 {
+        font-size: 24px;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 20px;
+      }
+      
+      .userMeta .name {
+        font-size: 16px;
+      }
+      
+      .stat-card .value {
+        font-size: 28px;
+      }
+    }
+
+    /* Loading Animation */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .loading {
+      animation: pulse 2s infinite;
     }
   </style>
 </head>
@@ -129,7 +630,7 @@
     <div class="grid-layout">
       <aside class="sidebar" aria-label="Sidebar">
         <div class="profile">
-          <div class="avatar">{{#if username}}{{username.[0]}}{{else}}U{{/if}}</div>
+          <div class="avatar">{{#if avatarUrl}}<img src="{{avatarUrl}}" alt="Avatar">{{else}}{{#if username}}{{username.[0]}}{{else}}U{{/if}}{{/if}}</div>
           <div class="userMeta">
             <div class="name">{{firstName}}</div>
             <div class="email">{{email}}</div>
@@ -137,15 +638,26 @@
         </div>
 
         <nav class="nav" aria-label="Main navigation">
-          <a href="/dashboard" class="active">Overview</a>
-          <a href="/reports">My Reports</a>
-          <a href="/report">Create Report</a>
-          <a href="/settings">Settings</a>
+          <a href="/dashboard" class="active">
+            <span>📊</span> Overview
+          </a>
+          <a href="/reports">
+            <span>📋</span> My Reports
+          </a>
+          <a href="/report">
+            <span>➕</span> Create Report
+          </a>
+          <a href="/contribute">
+            <span>🤝</span> Contribute
+          </a>
+          <a href="/settings">
+            <span>⚙️</span> Settings
+          </a>
         </nav>
 
         <div class="small">Signed in with Google: <strong>{{#if googleId}}Yes{{else}}No{{/if}}</strong></div>
         <div class="small" style="margin-top:10px">
-          <a href="#" id="signOutBtn" style="color:var(--muted);text-decoration:none" role="button" aria-label="Sign out">Sign out</a>
+          <a href="#" id="signOutBtn" style="color:var(--text-muted);text-decoration:none" role="button" aria-label="Sign out">Sign out</a>
         </div>
       </aside>
 
@@ -158,7 +670,7 @@
             </div>
 
             <div class="controls">
-              <input class="search" placeholder="Search reports or locations..." aria-label="Search" style="padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,0.04)" />
+              <input class="search" placeholder="Search reports or locations..." aria-label="Search" />
               <button class="btn btn-ghost" onclick="location.href='/reports'">My Reports</button>
               <button class="btn btn-primary" onclick="location.href='/report'">Create Report</button>
             </div>
@@ -190,7 +702,7 @@
               <div class="report-list">
                 {{#if recentReports}}
                   {{#each recentReports}}
-                    <div class="report-item">
+                    <div class="report-item" data-report-id="{{this._id}}">
                       <div class="meta">
                         <div class="title">{{this.title}}</div>
                         <div class="sub">{{this.location}} • {{this.createdAt}}</div>
@@ -210,6 +722,33 @@
               </div>
             </div>
           </section>
+
+          <section>
+            <div class="panel" aria-live="polite">
+              <h3 style="margin:0 0 10px 0">Latest civic issues</h3>
+              <div class="issues">
+                {{#if recentPublic}}
+                  {{#each recentPublic}}
+                    <div class="issue">
+                      <div>
+                        <div class="row">
+                          <div class="title">{{this.title}}</div>
+                          <span class="chip status-{{this.status}}">{{this.status}}</span>
+                          <span class="chip">{{this.department}}</span>
+                        </div>
+                        <div class="muted-small">{{#if this.locationText}}{{this.locationText}}{{else}}{{this.address}}{{/if}} • {{this.createdAt}} • by {{this.reporter}}</div>
+                      </div>
+                      <div class="row">
+                        <a href="/reports/{{this._id}}" class="btn btn-ghost" style="text-decoration:none">View</a>
+                      </div>
+                    </div>
+                  {{/each}}
+                {{else}}
+                  <div class="empty">No civic issues found.</div>
+                {{/if}}
+              </div>
+            </div>
+          </section>
         </div>
       </main>
     </div>
@@ -220,6 +759,26 @@
 </html>
 
 <script>
+  // Session management - check for session validity
+  function checkSession() {
+    fetch('/session-check', {
+      method: 'GET',
+      credentials: 'same-origin'
+    })
+    .then(response => {
+      if (response.status === 401 || response.status === 403) {
+        // Session expired, redirect to login
+        window.location.href = '/';
+      }
+    })
+    .catch(error => {
+      console.log('Session check failed:', error);
+    });
+  }
+
+  // Check session every 5 minutes
+  setInterval(checkSession, 5 * 60 * 1000);
+
   // Sign out via fetch to server logout route then redirect to main page
   (function(){
     const btn = document.getElementById('signOutBtn');
@@ -239,4 +798,89 @@
         });
     }, { once: true });
   })();
+
+  // Real-time status updates for dashboard
+  let lastUpdateTime = new Date().toISOString();
+  
+  async function checkForUpdates() {
+    try {
+      const res = await fetch(`/reports/updates?since=${lastUpdateTime}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.json();
+      
+      if (data.success && data.updates && data.updates.length > 0) {
+        data.updates.forEach(update => {
+          updateReportStatus(update.id, update.status);
+        });
+        lastUpdateTime = data.timestamp;
+      }
+    } catch (e) {
+      console.log('Status check failed:', e);
+    }
+  }
+
+  function updateReportStatus(reportId, newStatus) {
+    const reportItem = document.querySelector(`[data-report-id="${reportId}"]`);
+    if (reportItem) {
+      const badge = reportItem.querySelector('.badge');
+      if (badge) {
+        badge.textContent = newStatus;
+        badge.className = 'badge';
+        
+        // Add status-specific styling
+        if (newStatus === 'resolved') {
+          badge.style.background = 'linear-gradient(90deg,#bbf7d0,#d1fae5)';
+          badge.style.color = '#064e3b';
+        } else if (newStatus === 'in_progress') {
+          badge.style.background = 'linear-gradient(90deg,#fef3c7,#fde68a)';
+          badge.style.color = '#92400e';
+        } else if (newStatus === 'open') {
+          badge.style.background = 'linear-gradient(90deg,#ecfeff,#bbf7d0)';
+          badge.style.color = '#064e3b';
+        }
+        
+        // Show notification for status changes
+        showNotification(`Report status updated to: ${newStatus}`, 'success');
+      }
+    }
+  }
+
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed; top: 20px; right: 20px; z-index: 1000;
+      padding: 12px 20px; border-radius: 8px; color: white;
+      font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+      animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+  }
+
+  // Add CSS for animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Check for updates every 30 seconds
+  setInterval(checkForUpdates, 30000);
+  
+  // Initial check after 5 seconds
+  setTimeout(checkForUpdates, 5000);
 </script>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Contribute to Report - CivicConnect</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --accent: #06b6d4;
+      --accent-2: #0ea5a4;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --muted: #64748b;
+      --text: #0f172a;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+    /* Header */
+    .header { margin-bottom: 32px; }
+    .header h1 { font-size: 2.5rem; font-weight: 800; margin: 0 0 8px 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { color: var(--muted); font-size: 1.1rem; margin: 0; }
+
+    /* Layout */
+    .layout { display: grid; grid-template-columns: 1fr 400px; gap: 32px; }
+    @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } }
+
+    /* Report Card */
+    .report-card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 24px; }
+    .report-image { width: 100%; height: 300px; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+    .report-image img { width: 100%; height: 100%; object-fit: cover; }
+    .report-title { font-size: 1.5rem; font-weight: 700; margin: 0 0 12px 0; color: var(--text); }
+    .report-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; font-size: 14px; color: var(--muted); }
+    .report-description { color: var(--text); margin-bottom: 20px; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-info { background: #dbeafe; color: #1e3a8a; }
+
+    /* Form */
+    .form-card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); position: sticky; top: 20px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1); }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+
+    /* File Upload */
+    .file-upload { border: 2px dashed var(--border); border-radius: 8px; padding: 24px; text-align: center; transition: border-color 0.2s; cursor: pointer; }
+    .file-upload:hover { border-color: var(--accent); }
+    .file-upload.dragover { border-color: var(--accent); background: rgba(6, 182, 212, 0.05); }
+    .file-upload input { display: none; }
+    .file-upload-icon { font-size: 2rem; color: var(--muted); margin-bottom: 8px; }
+    .file-upload-text { color: var(--muted); margin-bottom: 8px; }
+    .file-upload-hint { font-size: 12px; color: var(--muted); }
+
+    /* Preview Images */
+    .image-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-top: 16px; }
+    .preview-item { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; }
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-remove { position: absolute; top: 4px; right: 4px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; box-shadow: var(--shadow); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Contributions */
+    .contributions { margin-top: 32px; }
+    .contribution { background: var(--card); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .contribution-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+    .contribution-title { font-size: 1.1rem; font-weight: 600; margin: 0; }
+    .contribution-meta { font-size: 12px; color: var(--muted); }
+    .contribution-description { color: var(--text); margin-bottom: 16px; }
+    .contribution-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-bottom: 16px; }
+    .contribution-images img { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; }
+    .contribution-actions { display: flex; gap: 8px; align-items: center; }
+    .vote-btn { padding: 6px 12px; border: 1px solid var(--border); background: var(--card); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .vote-btn:hover { background: var(--bg); }
+    .vote-btn.upvoted { background: var(--success); color: white; border-color: var(--success); }
+    .vote-btn.downvoted { background: var(--danger); color: white; border-color: var(--danger); }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state i { font-size: 3rem; margin-bottom: 16px; color: var(--border); }
+    .empty-state h3 { font-size: 1.25rem; margin: 0 0 8px 0; color: var(--text); }
+    .empty-state p { margin: 0; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .header h1 { font-size: 2rem; }
+      .layout { grid-template-columns: 1fr; }
+      .form-card { position: static; }
+    }
+
+    /* Ripple effect */
+    .ripple { position: absolute; border-radius: 50%; transform: scale(0); animation: ripple 0.6s linear; background: rgba(255, 255, 255, 0.5); pointer-events: none; }
+    @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-hands-helping"></i> Contribute Solution</h1>
+      <p>Share your insights and solutions to help resolve this civic issue</p>
+    </div>
+
+    <div class="layout">
+      <!-- Report Details -->
+      <div>
+        <div class="report-card">
+          <div class="report-image">
+            <img src="{{report.imagePath}}" alt="{{report.title}}">
+          </div>
+          <h2 class="report-title">{{report.title}}</h2>
+          <div class="report-meta">
+            <span><i class="fas fa-building"></i> {{report.department}}</span>
+            <span><i class="fas fa-map-marker-alt"></i> {{report.address}}</span>
+            <span><i class="fas fa-calendar"></i> {{report.createdAtFormatted}}</span>
+            <span><i class="fas fa-user"></i> {{report.reporter}}</span>
+          </div>
+          <div class="report-description">{{report.description}}</div>
+          <span class="badge {{#if (eq report.status "open")}}badge-warning{{else if (eq report.status "in_progress")}}badge-info{{else if (eq report.status "resolved")}}badge-success{{else}}badge-danger{{/if}}">
+            {{report.status}}
+          </span>
+        </div>
+
+        <!-- Existing Contributions -->
+        <div class="contributions">
+          <h3><i class="fas fa-comments"></i> Community Contributions</h3>
+          {{#if contributions.length}}
+            {{#each contributions}}
+              <div class="contribution">
+                <div class="contribution-header">
+                  <div>
+                    <h4 class="contribution-title">{{this.title}}</h4>
+                    <div class="contribution-meta">
+                      <i class="fas fa-user"></i> {{this.contributor}} • 
+                      <i class="fas fa-calendar"></i> {{this.createdAtFormatted}}
+                    </div>
+                  </div>
+                  <span class="badge {{#if (eq this.status "pending")}}badge-warning{{else if (eq this.status "approved")}}badge-success{{else}}badge-danger{{/if}}">
+                    {{this.status}}
+                  </span>
+                </div>
+                <div class="contribution-description">{{this.description}}</div>
+                {{#if this.images.length}}
+                  <div class="contribution-images">
+                    {{#each this.images}}
+                      <img src="{{this}}" alt="Contribution image">
+                    {{/each}}
+                  </div>
+                {{/if}}
+                <div class="contribution-actions">
+                  <button class="vote-btn" onclick="vote('{{this._id}}', 'up')">
+                    <i class="fas fa-thumbs-up"></i> {{this.upvotes}}
+                  </button>
+                  <button class="vote-btn" onclick="vote('{{this._id}}', 'down')">
+                    <i class="fas fa-thumbs-down"></i> {{this.downvotes}}
+                  </button>
+                </div>
+              </div>
+            {{/each}}
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-comments"></i>
+              <h3>No Contributions Yet</h3>
+              <p>Be the first to contribute a solution to this issue!</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      <!-- Contribution Form -->
+      <div>
+        <div class="form-card">
+          <h3><i class="fas fa-plus"></i> Add Your Contribution</h3>
+          <form id="contributionForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="title">Title *</label>
+              <input type="text" id="title" name="title" placeholder="Brief title for your contribution" required>
+            </div>
+            <div class="form-group">
+              <label for="description">Description *</label>
+              <textarea id="description" name="description" placeholder="Describe your solution or insights..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label>Supporting Images *</label>
+              <div class="file-upload" id="fileUpload">
+                <div class="file-upload-icon">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="file-upload-text">Click to upload or drag & drop</div>
+                <div class="file-upload-hint">Up to 5 images (JPG, PNG, WebP)</div>
+                <input type="file" id="images" name="images" multiple accept="image/*" required>
+              </div>
+              <div class="image-preview" id="imagePreview"></div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              <i class="fas fa-paper-plane"></i> Submit Contribution
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    // File upload handling
+    const fileUpload = document.getElementById('fileUpload');
+    const fileInput = document.getElementById('images');
+    const imagePreview = document.getElementById('imagePreview');
+    const maxFiles = 5;
+
+    fileUpload.addEventListener('click', () => fileInput.click());
+    fileUpload.addEventListener('dragover', handleDragOver);
+    fileUpload.addEventListener('dragleave', handleDragLeave);
+    fileUpload.addEventListener('drop', handleDrop);
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      fileUpload.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      fileUpload.classList.remove('dragover');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      fileUpload.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+      handleFiles(files);
+    }
+
+    function handleFileSelect(e) {
+      const files = Array.from(e.target.files);
+      handleFiles(files);
+    }
+
+    function handleFiles(files) {
+      if (files.length > maxFiles) {
+        showNotification(`Maximum ${maxFiles} files allowed`, 'error');
+        return;
+      }
+
+      imagePreview.innerHTML = '';
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const previewItem = document.createElement('div');
+          previewItem.className = 'preview-item';
+          previewItem.innerHTML = `
+            <img src="${e.target.result}" alt="Preview ${index + 1}">
+            <button type="button" class="preview-remove" onclick="removeImage(${index})">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          imagePreview.appendChild(previewItem);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeImage(index) {
+      const dt = new DataTransfer();
+      const files = Array.from(fileInput.files);
+      files.splice(index, 1);
+      files.forEach(file => dt.items.add(file));
+      fileInput.files = dt.files;
+      handleFiles(files);
+    }
+
+    // Form submission
+    document.getElementById('contributionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+      try {
+        const response = await fetch(window.location.pathname, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          showNotification('Contribution submitted successfully!', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          const error = await response.text();
+          showNotification(error || 'Error submitting contribution', 'error');
+        }
+      } catch (error) {
+        showNotification('Error submitting contribution', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Contribution';
+      }
+    });
+
+    // Voting
+    async function vote(contributionId, voteType) {
+      try {
+        const response = await fetch(`/contribute/${contributionId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ vote: voteType })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          showNotification('Vote recorded!', 'success');
+          // Update vote counts in UI
+          const voteBtn = event.target.closest('.vote-btn');
+          if (voteType === 'up') {
+            voteBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> ${data.upvotes}`;
+          } else {
+            voteBtn.innerHTML = `<i class="fas fa-thumbs-down"></i> ${data.downvotes}`;
+          }
+        } else {
+          showNotification(data.message || 'Error recording vote', 'error');
+        }
+      } catch (error) {
+        showNotification('Error recording vote', 'error');
+      }
+    }
+
+    // Ripple effect for buttons
+    function addRipple(e) {
+      const target = e.currentTarget;
+      const circle = document.createElement('span');
+      const diameter = Math.max(target.clientWidth, target.clientHeight);
+      const rect = target.getBoundingClientRect();
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - rect.left - diameter/2}px`;
+      circle.style.top = `${e.clientY - rect.top - diameter/2}px`;
+      circle.classList.add('ripple');
+      const old = target.getElementsByClassName('ripple')[0];
+      if (old) old.remove();
+      target.appendChild(circle);
+    }
+
+    document.addEventListener('click', function(e) {
+      const el = e.target.closest('.btn, .vote-btn');
+      if (el) addRipple(e);
+    });
+  </script>
+</body>
+</html>

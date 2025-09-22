@@ -20,7 +20,7 @@
     .thumb{height:320px;border-radius:10px;overflow:hidden;background:#f7fbfc;display:flex;align-items:center;justify-content:center}
     .thumb img{width:100%;height:100%;object-fit:cover}
     .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
-    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:white;font-weight:800;cursor:pointer}
+    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:rgb(0, 0, 0);font-weight:800;cursor:pointer}
     .btn-ghost{padding:10px 12px;border-radius:8px;border:1px solid rgba(7,16,35,0.06);background:transparent;color:#071023}
 
     /* global fixed back button (top-left) */
@@ -129,7 +129,7 @@
         const words = (desc.value||'').trim().split(/\s+/).filter(Boolean).length;
         if (words < 30 || words > 250){
           e.preventDefault();
-          alert('Description must be 30–250 words (current: ' + words + ')');
+          showNotification('Description must be 30–250 words (current: ' + words + ')', 'error');
           desc.focus();
           return;
         }

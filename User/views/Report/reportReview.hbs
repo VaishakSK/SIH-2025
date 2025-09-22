@@ -1,188 +1,1061 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Review Report • CivicConnect</title>
-  <style>
-    :root{
-      --bg1:#f0f4f8; --bg2:#eaf2f7;
-      --card:#ffffff; --muted:#616b7a;
-      --accent:#06b6d4; --accent-2:#0ea5a4;
-      --danger:#dc2626;
-      --radius:14px; --shadow: 0 12px 40px rgba(2,6,23,0.06);
-      --max-width:1400px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:
-      radial-gradient(800px 300px at 10% 10%, rgba(6,182,212,0.06), transparent),
-      linear-gradient(180deg,var(--bg1),var(--bg2));color:#071023}
-    .stage{width:100vw;height:100vh;display:flex;align-items:stretch;justify-content:center;padding:24px}
-    .wrap{width:100%;max-width:var(--max-width);height:100%;display:grid;grid-template-columns:1fr 420px;gap:24px}
-    @media (max-width:1100px){ .wrap{grid-template-columns:1fr} }
-    .panel{ background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow); padding:26px;display:flex;flex-direction:column;gap:18px;border:1px solid rgba(7,16,35,0.04);overflow:auto; }
-    .header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .title{display:flex;flex-direction:column}
-    .title h1{margin:0;font-size:20px;font-weight:800}
-    .title p{margin:4px 0 0 0;color:var(--muted);font-size:13px}
-    form{display:flex;flex-direction:column;gap:18px}
-    .fields{display:grid;grid-template-columns:1fr;gap:14px}
-    .col{display:flex;flex-direction:column;gap:8px}
-    label{font-weight:700;font-size:14px}
-    input[type="text"], select, textarea{ padding:12px;border-radius:10px;border:1px solid rgba(7,16,35,0.06);font-size:14px;background:linear-gradient(180deg, #fff, #fbfdfe);outline:none; }
-    textarea{min-height:160px;resize:vertical}
-    .muted{font-size:13px;color:var(--muted)}
-    .drop{height:380px;border-radius:12px;border:2px dashed rgba(7,16,35,0.06);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(255,255,255,0.6), transparent);position:relative;overflow:hidden;}
-    .preview-img{width:100%;height:100%;object-fit:cover;display:block}
-    .side{display:flex;flex-direction:column;gap:14px}
-    .card{background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;padding:14px;border:1px solid rgba(7,16,35,0.04)}
-    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(6,182,212,0.12)}
-    .btn-ghost{background:transparent;border:1px solid rgba(7,16,35,0.06);color:#071023;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
-    .meta-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
-    .wordcount{font-weight:700}
-    .progress{height:8px;background:#eef6f8;border-radius:999px;overflow:hidden}
-    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%}
-    .actions{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin-top:6px}
-    @media (max-width:760px){ .drop{height:260px} .wrap{padding:12px} .side{order:2} }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Review Report • CivicConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Try to load Google Maps API with error handling
+        function loadGoogleMapsAPI() {
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyB1EAA1oEqJcibMYus_CKa_I3b0et2uceY&libraries=places&callback=initGoogleMaps';
+            script.async = true;
+            script.defer = true;
+            script.onerror = function() {
+                console.error('Failed to load Google Maps API');
+                window.googleMapsLoadError = true;
+            };
+            document.head.appendChild(script);
+        }
+        
+        // Load the API
+        loadGoogleMapsAPI();
+    </script>
+    <style>
+        :root {
+            --bg1: #f0f4f8;
+            --bg2: #eaf2f7;
+            --card: #ffffff;
+            --muted: #616b7a;
+            --accent: #06b6d4;
+            --accent-2: #0ea5a4;
+            --danger: #dc2626;
+            --radius: 14px;
+            --shadow: 0 12px 40px rgba(2, 6, 23, 0.06);
+            --max-width: 1400px;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+            background: radial-gradient(800px 300px at 10% 10%, rgba(6, 182, 212, 0.06), transparent), linear-gradient(180deg, var(--bg1), var(--bg2));
+            color: #071023
+        }
+
+        .stage {
+            width: 100vw;
+            min-height: calc(100vh - 64px);
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 24px;
+            margin-top: 64px
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: var(--max-width);
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px
+        }
+
+        @media (max-width:1100px) {
+            .wrap {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            border: 1px solid rgba(7, 16, 35, 0.04);
+            overflow: auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px
+        }
+
+        .title {
+            display: flex;
+            flex-direction: column
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800
+        }
+
+        .title p {
+            margin: 4px 0 0 0;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 14px
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(7, 16, 35, 0.06);
+            font-size: 14px;
+            background: linear-gradient(180deg, #fff, #fbfdfe);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 160px;
+            resize: vertical
+        }
+
+        .muted {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .drop {
+            height: 380px;
+            border-radius: 12px;
+            border: 2px dashed rgba(7, 16, 35, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 200%%;
+            object-fit: cover;
+            display: block
+        }
+
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 14px
+        }
+
+        .card {
+            background: linear-gradient(180deg, #fff, #fbfdfe);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid rgba(7, 16, 35, 0.04)
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            color: rgb(0, 0, 0);
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.12)
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(7, 16, 35, 0.06);
+            color: #071023;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center
+        }
+
+        .wordcount {
+            font-weight: 700
+        }
+
+        .progress {
+            height: 8px;
+            background: #eef6f8;
+            border-radius: 999px;
+            overflow: hidden
+        }
+
+        .progress>i {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 6px
+        }
+
+        @media (max-width:760px) {
+            .drop {
+                height: 260px
+            }
+
+            .wrap {
+                padding: 12px
+            }
+
+            .side {
+                order: 2
+            }
+        }
+
+        /* Google Places Autocomplete Styling */
+        .pac-container {
+            background-color: #fff;
+            border: 1px solid rgba(7, 16, 35, 0.06);
+            border-radius: 10px;
+            box-shadow: 0 12px 40px rgba(2, 6, 23, 0.06);
+            font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+            margin-top: 4px;
+            z-index: 1000;
+        }
+
+        .pac-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(7, 16, 35, 0.04);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .pac-item:last-child {
+            border-bottom: none;
+        }
+
+        .pac-item:hover,
+        .pac-item-selected {
+            background-color: rgba(6, 182, 212, 0.06);
+        }
+
+        .pac-item-query {
+            font-weight: 700;
+            color: #071023;
+        }
+
+        .pac-matched {
+            font-weight: 700;
+            color: var(--accent);
+        }
+    </style>
 </head>
+
 <body>
-  {{> header}}
-
-  <div class="stage">
-    <div class="wrap">
-      <section class="panel" aria-labelledby="reviewTitle">
-        <div class="header">
-          <div class="title">
-            <h1 id="reviewTitle">Review & Edit Report</h1>
-            <p class="muted">Confirm image and add title, department and description before final submit.</p>
-          </div>
-          <div class="meta-row">
-            <div class="muted">Image from previous step • Max 6MB</div>
-          </div>
-        </div>
-
-        <form id="reviewForm" method="POST" action="/report/upload-complete">
-          <div class="fields">
-            <div class="col">
-              <label for="title">Title (max 10 words)</label>
-              <input id="title" name="title" type="text" required placeholder="Short title e.g. Pothole at Main St & 3rd Ave">
-              <div class="muted" style="margin-top:6px">Keep it short — up to 10 words.</div>
-            </div>
-
-            <div class="col">
-              <label>Captured Photo</label>
-              <div class="drop" role="img" aria-label="Captured photo">
-                <img id="reviewImage" class="preview-img" alt="Uploaded preview" src="{{draft.imagePath}}">
-              </div>
-            </div>
-
-            <div class="col">
-              <label for="department">Concerned Department</label>
-              <select id="department" name="department" required>
-                <option value="sanitation">Sanitation</option>
-                <option value="roads">Roads & Infrastructure</option>
-                <option value="electricity">Electricity</option>
-                <option value="water">Water Supply</option>
-                <option value="others">Others</option>
-              </select>
-            </div>
-
-            <div class="col">
-              <label for="address">Address (exact)</label>
-              <input id="address" name="address" type="text" required value="{{draft.address}}">
-            </div>
-
-            <div class="col">
-              <label for="description">Description (30–250 words)</label>
-              <textarea id="description" name="description" required placeholder="Describe the issue in detail..."></textarea>
-              <div class="meta-row" style="margin-top:8px">
-                <div class="muted"><span id="wordCount">Words: 0</span></div>
-                <div style="width:160px">
-                  <div class="progress" aria-hidden="true"><i id="wcProgress"></i></div>
+    {{> header}}
+    <div class="stage">
+        <div class="wrap">
+            <section class="panel" aria-labelledby="reviewTitle">
+                <div class="header">
+                    <div class="title">
+                        <h1 id="reviewTitle">Review & Edit Report</h1>
+                        <p class="muted">Confirm image and add title, department and description before final submit.</p>
+                    </div>
+                    <div class="meta-row">
+                        <div class="muted">Image from previous step • Max 6MB</div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="actions" aria-hidden="false">
-            <a class="btn-ghost" href="/report/upload">Change photo</a>
-            <button class="btn" type="submit" id="submitBtn">Submit Report</button>
-          </div>
-        </form>
-      </section>
+                <form id="reviewForm" method="POST" action="/report/upload-complete">
+                    <div class="fields">
+                        <div class="col">
+                            <label for="title">Title (max 10 words)</label>
+                            <input id="title" name="title" type="text" required
+                                placeholder="Short title e.g. Pothole at Main St & 3rd Ave">
+                            <div class="muted" style="margin-top:6px">Keep it short — up to 10 words.</div>
+                        </div>
 
-      <aside class="side">
-        <div class="card">
-          <h4 style="margin:0 0 8px 0">Submission Tips</h4>
-          <ul class="muted" style="margin:0 0 0 16px;padding:0;line-height:1.6">
-            <li>Capture the issue clearly, with surrounding context.</li>
-            <li>Provide exact address / landmark for faster action.</li>
-            <li>Describe what happened (30–250 words).</li>
-          </ul>
+                        <div class="col">
+                            <label>Captured Photo</label>
+                            <div class="drop" role="img" aria-label="Captured photo">
+                                <img id="reviewImage" class="preview-img" alt="Uploaded preview" src="{{#if draft.imagePath}}{{draft.imagePath}}{{else}}/logo-fina;.png{{/if}}">
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <label for="department">Concerned Department</label>
+                            <select id="department" name="department" required>
+                                <option value="sanitation">Sanitation</option>
+                                <option value="roads">Roads & Infrastructure</option>
+                                <option value="electricity">Electricity</option>
+                                <option value="water">Water Supply</option>
+                                <option value="others">Others</option>
+                            </select>
+                            <div class="muted" style="margin-top:6px">Department will be auto-detected from your image</div>
+                        </div>
+
+                        <div class="col">
+                            <label for="address">Address (exact)</label>
+                            <input id="address" name="address" type="text" required value="{{#if draft.address}}{{draft.address}}{{else}}123 Main Street{{/if}}" placeholder="Start typing to see address suggestions...">
+                            <div class="muted" style="margin-top:6px">Address suggestions will appear as you type</div>
+                        </div>
+
+                        <div class="col">
+                            <label for="description">Description (30–250 words)</label>
+                            <textarea id="description" name="description" required
+                                placeholder="Describe the issue in detail..."></textarea>
+                            <div class="meta-row" style="margin-top:8px">
+                                <div class="muted"><span id="wordCount">Words: 0</span></div>
+                                <div style="width:160px">
+                                    <div class="progress" aria-hidden="true"><i id="wcProgress"></i></div>
+                                </div>
+                            </div>
+                            <div class="actions" style="justify-content: flex-start; margin-top: 12px;">
+                                <button id="generateDescriptionBtn" class="btn" type="button" style="background-color: #0ea5a4; color: white">Generate Description</button>
+                                <div id="loadingIndicator" class="hidden" style="margin-left: 10px;">
+                                    <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                <div id="responseMessage" class="muted hidden" style="margin-left: 10px; color: var(--danger);"></div>
+                                <div id="autoGenStatus" class="muted" style="margin-left: 10px; font-size: 12px; display: none;">
+                                    🤖 Auto-generating description...
+                                </div>
+                            </div>
+                            
+                            <!-- Severity Score Display -->
+                            <div id="severityScoreContainer" class="severity-score" style="margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #06b6d4;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 600; color: #1e293b;">Severity Score:</span>
+                                    <span id="severityScoreValue" style="font-weight: 700; color: #06b6d4;">{{severityScoreValue}}</span>
+                                    <span style="font-size: 12px; color: #64748b;">/ 10</span>
+                                </div>
+                                <div id="severityScoreLabel" style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                                    Analyzing description...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions" aria-hidden="false">
+                        <a class="btn-ghost" href="/report/upload">Change photo</a>
+                        <button class="btn" type="submit" id="submitBtn" style="background-color: #0ea5a4; color: white;">Submit</button>
+
+                    </div>
+                </form>
+            </section>
+
+            <aside class="side">
+                <div class="card">
+                    <img src="/emblem.jpeg" alt="CivicConnect Logo"
+                        style="width: 100%; height: auto; display: block; border-radius: 8px; background-color: #f0f0f0;">
+                </div>
+
+                <div class="card">
+                    <h4 style="margin:0 0 8px 0">Submission Tips</h4>
+                    <ul class="muted" style="margin:0 0 0 16px;padding:0;line-height:1.6">
+                        <li>Capture the issue clearly, with surrounding context.</li>
+                        <li>Provide exact address / landmark for faster action.</li>
+                        <li>Describe what happened (30–250 words).</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4 style="margin:0 0 8px 0">Status</h4>
+                    <p class="muted" id="statusInfo">After submission you will be redirected to the report page where
+                        you can edit further.</p>
+                </div>
+            </aside>
         </div>
-
-        <div class="card">
-          <h4 style="margin:0 0 8px 0">Status</h4>
-          <p class="muted" id="statusInfo">After submission you will be redirected to the report page where you can edit further.</p>
-        </div>
-      </aside>
     </div>
-  </div>
+    <script>
+        (function () {
+            const desc = document.getElementById('description');
+            const wc = document.getElementById('wordCount');
+            const wcProgress = document.getElementById('wcProgress');
+            const titleInput = document.getElementById('title');
+            const submitBtn = document.getElementById('submitBtn');
+            const reviewImage = document.getElementById('reviewImage');
+            const generateDescriptionBtn = document.getElementById('generateDescriptionBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const responseMessage = document.getElementById('responseMessage');
+            const severityScoreValue = document.getElementById('severityScoreValue');
+            const severityScoreLabel = document.getElementById('severityScoreLabel');
 
-  {{> footer}}
+            // Check if required elements exist
+            if (!generateDescriptionBtn) {
+                console.error('Generate Description button not found');
+                return;
+            }
+            if (!loadingIndicator) {
+                console.error('Loading indicator not found');
+                return;
+            }
+            if (!responseMessage) {
+                console.error('Response message element not found');
+                return;
+            }
+            if (!severityScoreValue) {
+                console.error('Severity score value element not found');
+            }
+            if (!severityScoreLabel) {
+                console.error('Severity score label element not found');
+            }
 
-  <script>
-    (function(){
-      const desc = document.getElementById('description');
-      const wc = document.getElementById('wordCount');
-      const wcProgress = document.getElementById('wcProgress');
-      const titleInput = document.getElementById('title');
-      const submitBtn = document.getElementById('submitBtn');
+            function countWords(text) {
+                if (!text) return 0;
+                return text.trim().split(/\s+/).filter(Boolean).length;
+            }
 
-      function countWords(text){ if (!text) return 0; return text.trim().split(/\s+/).filter(Boolean).length; }
+            function updateWordCount() {
+                const n = countWords(desc.value || '');
+                wc.textContent = 'Words: ' + n;
+                const min = 30,
+                    max = 250;
+                const pct = Math.max(0, Math.min(100, Math.round(((n - min) / (max - min)) * 100)));
+                wcProgress.style.width = pct + '%';
+                wcProgress.style.background = (n < min || n > max) ? 'linear-gradient(90deg,var(--danger),#ff7b7b)' : 'linear-gradient(90deg,var(--accent),var(--accent-2))';
+                
+                // Update severity score if elements exist
+                if (severityScoreValue && severityScoreLabel) {
+                    updateSeverityScore();
+                }
+            }
 
-      function updateWordCount(){
-        const n = countWords(desc.value || '');
-        wc.textContent = 'Words: ' + n;
-        const min = 30, max = 250;
-        const pct = Math.max(0, Math.min(100, Math.round(((n - min) / (max - min)) * 100)));
-        wcProgress.style.width = pct + '%';
-        wcProgress.style.background = (n < min || n > max) ? 'linear-gradient(90deg,var(--danger),#ff7b7b)' : 'linear-gradient(90deg,var(--accent),var(--accent-2))';
-      }
+            desc.addEventListener('input', updateWordCount);
+            updateWordCount();
+            
+            // Only call updateSeverityScore if elements exist
+            if (severityScoreValue && severityScoreLabel) {
+                updateSeverityScore();
+            }
 
-      desc.addEventListener('input', updateWordCount);
-      updateWordCount();
+            function titleWordCheck() {
+                const words = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
+                if (words > 10) titleInput.setCustomValidity('Title must be 1–10 words');
+                else titleInput.setCustomValidity('');
+            }
 
-      function titleWordCheck(){
-        const words = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
-        if (words > 10) titleInput.setCustomValidity('Title must be 1–10 words'); else titleInput.setCustomValidity('');
-      }
-      titleInput.addEventListener('input', titleWordCheck);
-      titleWordCheck();
+            // Severity score calculation function
+            function calculateSeverityScore(description) {
+                if (!description || description.trim().length < 30) {
+                    return null;
+                }
 
-      document.getElementById('reviewForm').addEventListener('submit', function(e){
-        const titleWords = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
-        if (titleWords < 1 || titleWords > 10){
-          e.preventDefault(); alert('Title must be 1–10 words'); titleInput.focus(); return;
-        }
-        const dCount = countWords(desc.value || '');
-        if (dCount < 30 || dCount > 250){
-          e.preventDefault(); alert('Description must be 30–250 words. Current: ' + dCount); desc.focus(); return;
-        }
-        const addr = document.getElementById('address');
-        if (!addr.value || !addr.value.trim()){ e.preventDefault(); alert('Address is required'); addr.focus(); return; }
-        submitBtn.disabled = true; submitBtn.textContent = 'Submitting…';
-      });
+                const text = description.toLowerCase();
+                let score = 5; // Default medium severity
+                
+                // High severity keywords
+                const highSeverityKeywords = ['emergency', 'urgent', 'dangerous', 'hazard', 'accident', 'injury', 'fire', 'flood', 'collapse', 'critical', 'life-threatening', 'blocking', 'broken', 'damaged', 'unsafe'];
+                // Low severity keywords  
+                const lowSeverityKeywords = ['minor', 'small', 'cosmetic', 'aesthetic', 'maintenance', 'routine', 'cleanup', 'beautification', 'improvement', 'enhancement'];
+                
+                const highCount = highSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+                const lowCount = lowSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+                
+                if (highCount > 0) score = Math.min(10, 7 + highCount * 0.5);
+                if (lowCount > 0) score = Math.max(0, 3 - lowCount * 0.5);
+                
+                return Math.round(score * 10) / 10;
+            }
 
-      // prefill department if server provided (optional)
-      (function prefill(){
-        try {
-          const dept = "{{draft.department}}";
-          if (dept) document.getElementById('department').value = dept;
-        } catch(e){}
-      })();
-    })();
-  </script>
+            function updateSeverityScore() {
+                // Check if severity score elements exist
+                if (!severityScoreValue || !severityScoreLabel) {
+                    console.log('Severity score elements not found, skipping update');
+                    return;
+                }
+
+                const score = calculateSeverityScore(desc.value);
+                
+                if (score === null) {
+                    severityScoreValue.textContent = '--';
+                    severityScoreLabel.textContent = 'Enter at least 30 words to analyze severity';
+                    return;
+                }
+
+                severityScoreValue.textContent = score;
+                
+                // Update color based on severity
+                const container = document.getElementById('severityScoreContainer');
+                if (container) {
+                    if (score >= 8) {
+                        container.style.borderLeftColor = '#ef4444'; // Red for high severity
+                        severityScoreLabel.textContent = 'High Severity - Requires immediate attention';
+                    } else if (score >= 6) {
+                        container.style.borderLeftColor = '#f59e0b'; // Orange for medium-high severity
+                        severityScoreLabel.textContent = 'Medium-High Severity - Should be addressed soon';
+                    } else if (score >= 4) {
+                        container.style.borderLeftColor = '#06b6d4'; // Blue for medium severity
+                        severityScoreLabel.textContent = 'Medium Severity - Standard priority';
+                    } else {
+                        container.style.borderLeftColor = '#10b981'; // Green for low severity
+                        severityScoreLabel.textContent = 'Low Severity - Routine maintenance';
+                    }
+                }
+            }
+            titleInput.addEventListener('input', titleWordCheck);
+            titleWordCheck();
+
+            document.getElementById('reviewForm').addEventListener('submit', function (e) {
+                const titleWords = (titleInput.value || '').trim().split(/\s+/).filter(Boolean).length;
+                if (titleWords < 1 || titleWords > 10) {
+                    e.preventDefault();
+                    alert('Title must be 1–10 words');
+                    titleInput.focus();
+                    return;
+                }
+                const dCount = countWords(desc.value || '');
+                if (dCount < 30 || dCount > 250) {
+                    e.preventDefault();
+                    alert('Description must be 30–250 words. Current: ' + dCount);
+                    desc.focus();
+                    return;
+                }
+                const addr = document.getElementById('address');
+                if (!addr.value || !addr.value.trim()) {
+                    e.preventDefault();
+                    showNotification('Address is required', 'error');
+                    addr.focus();
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting…';
+            });
+
+            // --- AI INTEGRATION SCRIPT WITH DEPARTMENT DETECTION ---
+            const API_KEY = "AIzaSyADmHmFlpdMN_MgbA2bfGekjf1DQz8Mm9A";
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+            function showResponse(message, isError = false) {
+                if (responseMessage) {
+                    responseMessage.textContent = message;
+                    responseMessage.classList.remove('hidden');
+                    responseMessage.style.color = isError ? 'var(--danger)' : 'var(--muted)';
+                }
+            }
+
+            function hideResponse() {
+                if (responseMessage) {
+                    responseMessage.classList.add('hidden');
+                }
+            }
+
+            // Function to detect department from image
+            async function detectDepartmentFromImage() {
+                const imageUrl = reviewImage.src;
+                if (!imageUrl || imageUrl === window.location.origin + '/logo-fina;.png') {
+                    return null;
+                }
+
+                let base64Image = null;
+                try {
+                    if (imageUrl.startsWith('data:image/')) {
+                        base64Image = imageUrl.split(',')[1];
+                    } else {
+                        const response = await fetch(imageUrl);
+                        const blob = await response.blob();
+                        base64Image = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error converting image to base64 for department detection:', error);
+                    return null;
+                }
+
+                const departmentPrompt = `Analyze this image for civic issues and determine which department should handle it. Return ONLY one of these exact department codes: "sanitation", "roads", "electricity", "water", or "others". 
+
+Guidelines:
+- "sanitation": waste, garbage, litter, dirty areas, sanitation issues
+- "roads": potholes, road damage, traffic signs, street infrastructure, sidewalks
+- "electricity": power lines, street lights, electrical equipment, power outages
+- "water": water leaks, drainage issues, flooding, water supply problems
+- "others": anything that doesn't fit the above categories
+
+Return only the department code, nothing else.`;
+
+                try {
+                    const payload = {
+                        contents: [{
+                            role: "user",
+                            parts: [{
+                                text: departmentPrompt
+                            }, {
+                                inlineData: {
+                                    mimeType: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }]
+                        }],
+                        generationConfig: {
+                            responseMimeType: "text/plain"
+                        }
+                    };
+
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const detectedDept = candidate.content.parts[0].text.trim().toLowerCase();
+                        const validDepartments = ['sanitation', 'roads', 'electricity', 'water', 'others'];
+                        
+                        if (validDepartments.includes(detectedDept)) {
+                            return detectedDept;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error detecting department:', error);
+                }
+                return null;
+            }
+
+            // Auto-detect department when page loads
+            async function autoDetectDepartment() {
+                const detectedDept = await detectDepartmentFromImage();
+                if (detectedDept) {
+                    document.getElementById('department').value = detectedDept;
+                    showResponse(`Department auto-detected: ${detectedDept}`, false);
+                    setTimeout(() => hideResponse(), 3000);
+                }
+            }
+
+            // Run department detection when page loads
+            autoDetectDepartment();
+
+            // Auto-generate description when page loads
+            async function autoGenerateDescription() {
+                const imageUrl = reviewImage.src;
+                if (!imageUrl || imageUrl === window.location.origin + '/logo-fina;.png') {
+                    console.log('No image available for auto-generation');
+                    return;
+                }
+
+                // Check if description is already filled
+                if (desc.value.trim() && titleInput.value.trim()) {
+                    console.log('Description already exists, skipping auto-generation');
+                    return;
+                }
+
+                console.log('Auto-generating description...');
+                const autoGenStatus = document.getElementById('autoGenStatus');
+                if (autoGenStatus) {
+                    autoGenStatus.style.display = 'block';
+                }
+                await generateDescriptionFromImage();
+                if (autoGenStatus) {
+                    autoGenStatus.style.display = 'none';
+                }
+            }
+
+            // Function to generate description (extracted from button click handler)
+            async function generateDescriptionFromImage() {
+                const imageUrl = reviewImage.src;
+                if (!imageUrl || imageUrl === window.location.origin + '/logo-fina;.png') {
+                    showResponse('No image available to analyze. Please upload a photo first.', true);
+                    return;
+                }
+
+                let base64Image = null;
+                try {
+                    if (imageUrl.startsWith('data:image/')) {
+                        base64Image = imageUrl.split(',')[1];
+                    } else {
+                        const response = await fetch(imageUrl);
+                        const blob = await response.blob();
+                        base64Image = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error converting image to base64:', error);
+                    showResponse('Failed to process image for analysis. Ensure the image is accessible.', true);
+                    return;
+                }
+
+                // Only clear if fields are empty
+                if (!desc.value.trim()) desc.value = '';
+                if (!titleInput.value.trim()) titleInput.value = '';
+                
+                // Safely disable button and show loading
+                if (generateDescriptionBtn) generateDescriptionBtn.disabled = true;
+                if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+                hideResponse();
+
+                const prompt = `Analyze the image for any civic issues (e.g., waste, potholes, broken infrastructure, flooding, unmaintained public spaces). Provide a concise title (under 10 words) and a description (30-250 words) related to the civic issues depicted. Return the response as a JSON object with 'title' and 'description' keys. For example: { "title": "Pothole on Main Street", "description": "..." };`;
+
+                try {
+                    const payload = {
+                        contents: [{
+                            role: "user",
+                            parts: [{
+                                text: prompt
+                            }, {
+                                inlineData: {
+                                    mimeType: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }]
+                        }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    "title": {
+                                        "type": "STRING"
+                                    },
+                                    "description": {
+                                        "type": "STRING"
+                                    }
+                                },
+                                "propertyOrdering": ["title", "description"]
+                            }
+                        }
+                    };
+
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API call failed with status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const jsonString = candidate.content.parts[0].text;
+                        const data = JSON.parse(jsonString);
+
+                        // Only set if fields are empty
+                        if (!titleInput.value.trim()) titleInput.value = data.title || '';
+                        if (!desc.value.trim()) desc.value = data.description || '';
+                        
+                        updateWordCount();
+                        titleWordCheck();
+                        showResponse('Description generated automatically!', false);
+                    } else {
+                        throw new Error('Invalid API response structure from AI.');
+                    }
+
+                } catch (error) {
+                    console.error('Error generating content:', error);
+                    showResponse('An error occurred while generating the description. Please try again.', true);
+                } finally {
+                    // Safely re-enable button and hide loading
+                    if (generateDescriptionBtn) generateDescriptionBtn.disabled = false;
+                    if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                }
+            }
+
+            // Run auto-generation when page loads
+            setTimeout(autoGenerateDescription, 1000); // Small delay to ensure page is fully loaded
+
+            generateDescriptionBtn.addEventListener('click', async () => {
+                // Clear existing content when manually clicking the button
+                desc.value = '';
+                titleInput.value = '';
+                await generateDescriptionFromImage();
+            });
+
+            // Department is now auto-detected from image using AI
+
+            // Global variable to track autocomplete status
+            let autocompleteInitialized = false;
+            let autocompleteError = false;
+
+            // Initialize Google Places Autocomplete
+            function initializeAutocomplete() {
+                const addressInput = document.getElementById('address');
+                
+                if (!addressInput) {
+                    console.log('Address input not found');
+                    return;
+                }
+
+                try {
+                    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                        const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                            types: ['address', 'establishment'],
+                            componentRestrictions: { country: 'in' }, // Restrict to India
+                            fields: ['formatted_address', 'geometry', 'name', 'place_id']
+                        });
+
+                        autocomplete.addListener('place_changed', function() {
+                            const place = autocomplete.getPlace();
+                            
+                            if (!place.geometry || !place.geometry.location) {
+                                console.log("No details available for input: '" + place.name + "'");
+                                return;
+                            }
+
+                            // Update the address field with the formatted address
+                            addressInput.value = place.formatted_address;
+                            
+                            // You can also extract additional information if needed
+                            console.log('Selected place:', place);
+                        });
+
+                        autocompleteInitialized = true;
+                        console.log('Google Places Autocomplete initialized successfully');
+                        
+                        // Update UI to show autocomplete is working
+                        const helpText = addressInput.parentNode.querySelector('.muted');
+                        if (helpText) {
+                            helpText.textContent = 'Address suggestions are now active';
+                            helpText.style.color = 'var(--accent)';
+                        }
+                        
+                    } else {
+                        throw new Error('Google Maps API not available');
+                    }
+                } catch (error) {
+                    console.error('Error initializing Google Places Autocomplete:', error);
+                    autocompleteError = true;
+                    
+                    // Update UI to show autocomplete is not available
+                    const helpText = addressInput.parentNode.querySelector('.muted');
+                    if (helpText) {
+                        helpText.textContent = 'Address suggestions unavailable - please enter address manually';
+                        helpText.style.color = 'var(--muted)';
+                    }
+                }
+            }
+
+            // Fallback autocomplete using a simple local approach
+            function initializeFallbackAutocomplete() {
+                const addressInput = document.getElementById('address');
+                if (!addressInput) return;
+
+                // Create a simple dropdown for suggestions
+                const dropdown = document.createElement('div');
+                dropdown.id = 'address-suggestions';
+                dropdown.style.cssText = `
+                    position: absolute;
+                    background: white;
+                    border: 1px solid rgba(7, 16, 35, 0.06);
+                    border-radius: 10px;
+                    box-shadow: 0 12px 40px rgba(2, 6, 23, 0.06);
+                    max-height: 200px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                    display: none;
+                    width: 100%;
+                    margin-top: 4px;
+                `;
+
+                // Insert dropdown after the address input
+                addressInput.parentNode.style.position = 'relative';
+                addressInput.parentNode.appendChild(dropdown);
+
+                // Common Indian addresses for suggestions
+                const commonAddresses = [
+                    'Main Road, Mumbai, Maharashtra',
+                    'Park Street, Kolkata, West Bengal',
+                    'MG Road, Bangalore, Karnataka',
+                    'Connaught Place, New Delhi, Delhi',
+                    'Marine Drive, Mumbai, Maharashtra',
+                    'Juhu Beach, Mumbai, Maharashtra',
+                    'Lalbagh, Bangalore, Karnataka',
+                    'India Gate, New Delhi, Delhi',
+                    'Charminar, Hyderabad, Telangana',
+                    'Gateway of India, Mumbai, Maharashtra',
+                    'Brigade Road, Bangalore, Karnataka',
+                    'Commercial Street, Bangalore, Karnataka',
+                    'Chandni Chowk, New Delhi, Delhi',
+                    'Karol Bagh, New Delhi, Delhi',
+                    'Lajpat Nagar, New Delhi, Delhi',
+                    'Sarojini Nagar, New Delhi, Delhi',
+                    'Colaba Causeway, Mumbai, Maharashtra',
+                    'Bandra West, Mumbai, Maharashtra',
+                    'Andheri West, Mumbai, Maharashtra',
+                    'Powai, Mumbai, Maharashtra'
+                ];
+
+                function showSuggestions(matches) {
+                    dropdown.innerHTML = '';
+                    
+                    if (matches.length === 0) {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+
+                    matches.slice(0, 5).forEach(match => {
+                        const item = document.createElement('div');
+                        item.style.cssText = `
+                            padding: 12px;
+                            cursor: pointer;
+                            border-bottom: 1px solid rgba(7, 16, 35, 0.04);
+                            font-size: 14px;
+                        `;
+                        item.textContent = match;
+                        
+                        item.addEventListener('mouseenter', function() {
+                            this.style.backgroundColor = 'rgba(6, 182, 212, 0.06)';
+                        });
+                        
+                        item.addEventListener('mouseleave', function() {
+                            this.style.backgroundColor = 'transparent';
+                        });
+                        
+                        item.addEventListener('click', function() {
+                            addressInput.value = match;
+                            dropdown.style.display = 'none';
+                        });
+                        
+                        dropdown.appendChild(item);
+                    });
+                    
+                    dropdown.style.display = 'block';
+                }
+
+                addressInput.addEventListener('input', function() {
+                    const value = this.value.toLowerCase();
+                    
+                    if (value.length < 2) {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+
+                    const matches = commonAddresses.filter(addr => 
+                        addr.toLowerCase().includes(value)
+                    );
+
+                    showSuggestions(matches);
+                });
+
+                // Hide dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!addressInput.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+
+                // Update help text
+                const helpText = addressInput.parentNode.querySelector('.muted');
+                if (helpText) {
+                    helpText.textContent = 'Basic address suggestions available';
+                    helpText.style.color = 'var(--muted)';
+                }
+            }
+
+            // Global callback function for Google Maps API
+            window.initGoogleMaps = function() {
+                console.log('Google Maps API loaded successfully');
+                initializeAutocomplete();
+            };
+
+            // Error handler for Google Maps API
+            window.gm_authFailure = function() {
+                console.error('Google Maps API authentication failed');
+                autocompleteError = true;
+                initializeFallbackAutocomplete();
+            };
+
+            // Check for Google Maps load error and initialize fallback
+            function checkGoogleMapsStatus() {
+                if (window.googleMapsLoadError) {
+                    console.log('Google Maps API failed to load - using fallback');
+                    initializeFallbackAutocomplete();
+                    return;
+                }
+                
+                if (!autocompleteInitialized && !autocompleteError) {
+                    // Check if Google Maps is available
+                    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                        initializeAutocomplete();
+                    } else {
+                        // Wait a bit more and try again
+                        setTimeout(checkGoogleMapsStatus, 1000);
+                    }
+                }
+            }
+
+            // Start checking for Google Maps status
+            setTimeout(checkGoogleMapsStatus, 2000);
+
+            // Final fallback - if nothing works after 8 seconds
+            setTimeout(function() {
+                if (!autocompleteInitialized && !autocompleteError) {
+                    console.log('Google Maps API loading timeout - initializing fallback');
+                    initializeFallbackAutocomplete();
+                }
+            }, 8000);
+        })();
+    </script>
+    {{> footer}}
 </body>
+
 </html>

@@ -5,9 +5,13 @@ const multer = require('multer');
 const router = express.Router();
 const Report = require('../../models/report');
 const User = require('../../models/user');
+const dayjs = require('dayjs');
+const relativeTime = require('dayjs/plugin/relativeTime');
+const axios = require('axios');
+dayjs.extend(relativeTime);
 
-// uploads directory (served by app.js as /uploads)
-const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+// uploads directory (served by app.js as /uploads) - using common uploads directory
+const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'user');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // multer for browser upload
@@ -32,6 +36,58 @@ const upload = multer({
 function countWords(text){ if (!text) return 0; return text.trim().split(/\s+/).filter(Boolean).length; }
 function titleWordsOk(title){ const n = (title||'').trim().split(/\s+/).filter(Boolean).length; return n>=1 && n<=10; }
 function descWordsOk(desc){ const n = countWords(desc||''); return n>=30 && n<=250; }
+
+// Severity scoring function
+async function getSeverityScore(description) {
+  try {
+    // Replace this URL with your actual severity scoring API endpoint
+    const apiUrl = process.env.SEVERITY_API_URL || 'https://api.example.com/severity-score';
+    
+    const response = await axios.post(apiUrl, {
+      text: description,
+      type: 'civic_issue'
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SEVERITY_API_KEY || 'demo-key'}`
+      },
+      timeout: 5000 // 5 second timeout
+    });
+
+    // Extract severity score from response (adjust based on your API response format)
+    const severityScore = response.data.severity_score || response.data.score || null;
+    
+    // Ensure score is between 0-10
+    if (severityScore !== null && severityScore >= 0 && severityScore <= 10) {
+      return Math.round(severityScore * 10) / 10; // Round to 1 decimal place
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Severity scoring API error:', error.message);
+    // Return a default score based on keywords if API fails
+    return getDefaultSeverityScore(description);
+  }
+}
+
+// Fallback severity scoring based on keywords
+function getDefaultSeverityScore(description) {
+  const text = description.toLowerCase();
+  let score = 5; // Default medium severity
+  
+  // High severity keywords
+  const highSeverityKeywords = ['emergency', 'urgent', 'dangerous', 'hazard', 'accident', 'injury', 'fire', 'flood', 'collapse', 'critical', 'life-threatening'];
+  // Low severity keywords  
+  const lowSeverityKeywords = ['minor', 'small', 'cosmetic', 'aesthetic', 'maintenance', 'routine', 'cleanup', 'beautification'];
+  
+  const highCount = highSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+  const lowCount = lowSeverityKeywords.filter(keyword => text.includes(keyword)).length;
+  
+  if (highCount > 0) score = Math.min(10, 7 + highCount);
+  if (lowCount > 0) score = Math.max(0, 3 - lowCount);
+  
+  return score;
+}
 
 // GET choose page
 router.get('/report', (req, res) => {
@@ -81,7 +137,10 @@ router.post('/report/capture', express.urlencoded({ extended: true, limit: '10mb
     const filename = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8) + ext;
     const filePath = path.join(uploadsDir, filename);
     fs.writeFileSync(filePath, buffer);
-    const relUrl = path.posix.join('/uploads', filename);
+    const relUrl = path.posix.join('/uploads/user', filename);
+
+    // Get severity score from API
+    const severityScore = await getSeverityScore(description);
 
     const rpt = new Report({
       user: req.session.userId,
@@ -91,6 +150,7 @@ router.post('/report/capture', express.urlencoded({ extended: true, limit: '10mb
       address: address.trim(),
       locationText: locationText ? locationText.trim() : '',
       description,
+      severityScore,
       geoLocation: {
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null
@@ -120,7 +180,11 @@ router.post('/report/upload', upload.single('photo'), async (req, res) => {
     if (!descWordsOk(description)) { fs.unlinkSync(req.file.path); return res.status(400).send('Description must be 30–250 words'); }
     if (!address || !address.trim()) { fs.unlinkSync(req.file.path); return res.status(400).send('Address required'); }
 
-    const relPath = path.posix.join('/uploads', path.basename(req.file.path));
+    const relPath = path.posix.join('/uploads/user', path.basename(req.file.path));
+    
+    // Get severity score from API
+    const severityScore = await getSeverityScore(description);
+    
     const rpt = new Report({
       user: req.session.userId,
       title: title.trim(),
@@ -129,6 +193,7 @@ router.post('/report/upload', upload.single('photo'), async (req, res) => {
       address: address.trim(),
       locationText: locationText ? locationText.trim() : '',
       description,
+      severityScore,
       geoLocation: {
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null
@@ -164,7 +229,7 @@ router.post('/report/upload-temp', upload.single('photo'), async (req, res) => {
 
     const { latitude, longitude, address, locationText } = req.body;
     const filename = path.basename(req.file.path);
-    const relPath = path.posix.join('/uploads', filename);
+    const relPath = path.posix.join('/uploads/user', filename);
 
     // store minimal draft in session
     req.session.tempReport = {
@@ -215,7 +280,7 @@ router.post('/report/capture-temp', express.urlencoded({ extended: true, limit: 
     const filename = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8) + ext;
     const filePath = path.join(uploadsDir, filename);
     fs.writeFileSync(filePath, buffer);
-    const relPath = path.posix.join('/uploads', filename);
+    const relPath = path.posix.join('/uploads/user', filename);
 
     // store minimal draft in session
     req.session.tempReport = {
@@ -266,6 +331,9 @@ router.post('/report/upload-complete', express.urlencoded({ extended: true, limi
     const finalAddress = (postedAddress && postedAddress.trim()) ? postedAddress.trim() : (draft.address || '');
     if (!finalAddress) return res.status(400).send('Address required');
 
+    // Get severity score from API
+    const severityScore = await getSeverityScore(description);
+
     const rpt = new Report({
       user: req.session.userId,
       title: title.trim(),
@@ -274,6 +342,7 @@ router.post('/report/upload-complete', express.urlencoded({ extended: true, limi
       address: finalAddress,
       locationText: draft.locationText || finalAddress,
       description: description,
+      severityScore,
       geoLocation: {
         latitude: draft.latitude !== undefined ? draft.latitude : null,
         longitude: draft.longitude !== undefined ? draft.longitude : null
@@ -310,20 +379,75 @@ router.get('/reports', async (req, res) => {
   }
 });
 
-// GET view single report page
+// Get status updates for real-time updates (JSON) - MUST be before /reports/:id routes
+router.get('/reports/updates', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const since = req.query.since;
+    if (!since) {
+      return res.status(400).json({ success: false, message: 'since parameter required' });
+    }
+
+    // Find reports that have been updated since the given timestamp
+    const reports = await Report.find({
+      user: req.session.userId,
+      updatedAt: { $gt: new Date(since) }
+    }).select('_id status updatedAt').lean();
+
+    const updates = reports.map(report => ({
+      id: report._id.toString(),
+      status: report.status,
+      updatedAt: report.updatedAt
+    }));
+
+    return res.json({
+      success: true,
+      updates: updates,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Status updates route error:', err);
+    return res.status(500).json({ success: false, message: 'Error fetching updates' });
+  }
+});
+
+// GET view single report page — public visibility
 router.get('/reports/:id', async (req, res) => {
   try {
-    if (!req.session || !req.session.userId) return res.redirect('/');
-    const report = await Report.findOne({ _id: req.params.id, user: req.session.userId }).populate('user', 'firstName lastName email username').lean();
-    if (!report) return res.status(404).send('Report not found or you do not have permission to view it.');
+    const report = await Report.findById(req.params.id).populate('user', 'firstName lastName email username').lean();
+    if (!report) return res.status(404).send('Report not found');
 
     report.createdAtFormatted = new Date(report.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     report.updatedAtFormatted = new Date(report.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    report.updatedAgo = dayjs(report.updatedAt).fromNow();
 
     return res.render('Report/viewReport', { report });
   } catch (err) {
     console.error('Error fetching report:', err);
     return res.status(500).send('Error fetching report');
+  }
+});
+
+// Track status route (JSON)
+router.get('/reports/:id/status', async (req, res) => {
+  try {
+    const rpt = await Report.findById(req.params.id).select('status updatedAt createdAt').lean();
+    if (!rpt) return res.status(404).json({ success: false, message: 'Report not found' });
+    return res.json({
+      success: true,
+      status: rpt.status,
+      createdAt: rpt.createdAt,
+      updatedAt: rpt.updatedAt,
+      createdAtFormatted: new Date(rpt.createdAt).toLocaleString(),
+      updatedAtFormatted: new Date(rpt.updatedAt).toLocaleString(),
+      updatedAgo: dayjs(rpt.updatedAt).fromNow()
+    });
+  } catch (err) {
+    console.error('Status route error:', err);
+    return res.status(500).json({ success: false, message: 'Error fetching status' });
   }
 });
 
@@ -365,6 +489,10 @@ router.post('/reports/:id/edit', upload.single('photo'), async (req, res) => {
     report.address = address.trim();
     report.locationText = locationText ? locationText.trim() : '';
     report.description = description.trim();
+    
+    // Recalculate severity score if description changed
+    const severityScore = await getSeverityScore(description.trim());
+    report.severityScore = severityScore;
 
     // Handle file upload
     if (req.file) {
@@ -375,7 +503,7 @@ router.post('/reports/:id/edit', upload.single('photo'), async (req, res) => {
           fs.unlinkSync(oldImagePath);
         }
       }
-      report.imagePath = path.posix.join('/uploads', req.file.filename);
+      report.imagePath = path.posix.join('/uploads/user', req.file.filename);
     }
 
     await report.save();

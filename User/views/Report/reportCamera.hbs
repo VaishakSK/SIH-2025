@@ -142,7 +142,7 @@
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
         video.srcObject = stream;
         videoWrap.style.display = 'flex'; // Show video wrapper
-        placeholder.classList.add('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
         preview.style.display = 'none';
         retakeBtn.style.display = 'none';
         captureBtn.style.display = '';
@@ -175,7 +175,7 @@
       if (stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; video.srcObject = null; }
       retakeBtn.style.display = '';
       captureBtn.style.display = 'none';
-      placeholder.classList.add('hidden');
+      if (placeholder) placeholder.classList.add('hidden');
     });
 
     retakeBtn.addEventListener('click', ()=>{
@@ -186,7 +186,7 @@
       emptyPreview.style.display = 'block';
       captureBtn.style.display = '';
       retakeBtn.style.display = 'none';
-      placeholder.classList.remove('hidden');
+      if (placeholder) placeholder.classList.remove('hidden');
       startCamera();
     });
 
@@ -205,7 +205,7 @@
     });
 
     document.getElementById('cameraForm').addEventListener('submit', function(e){
-      if (!imageBase64.value){ e.preventDefault(); alert('Capture a photo before continuing'); return; }
+      if (!imageBase64.value){ e.preventDefault(); showNotification('Capture a photo before continuing', 'error'); return; }
       // address optional here
       doneBtn.disabled = true; doneBtn.textContent = 'Submitting…';
     });

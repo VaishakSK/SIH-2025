@@ -20,32 +20,78 @@ const signupRoutes = require('./routes/AuthRoutes/signup');
 const googleRoutes = require('./routes/AuthRoutes/google'); // new
 const logoutRoutes = require('./routes/AuthRoutes/logout'); // added
 const dashboardRoutes = require('./routes/Dashboard/dashboard');
+const settingsRoutes = require('./routes/Settings/settings');
+const contributeRoutes = require('./routes/Contribute/contribute');
+const geocodingRoutes = require('./routes/geocoding');
 
 const app = express();
 
-// Middlewar
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Security headers to fix TrustedScript issues
+app.use((req, res, next) => {
+    // Set Content Security Policy to allow inline scripts, Google OAuth, and upload functionality
+    res.setHeader('Content-Security-Policy', 
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://developers.google.com https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://maps.googleapis.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; " +
+        "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
+        "img-src 'self' data: blob: https: http:; " +
+        "connect-src 'self' https://accounts.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://maps.googleapis.com; " +
+        "frame-src 'self' https://accounts.google.com https://maps.google.com; " +
+        "object-src 'none'; " +
+        "base-uri 'self';"
+    );
+    
+    // Set other security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    next();
+});
+
+// Serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static("public"));
 
 // Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-change-in-production',
-    resave: false,
-    saveUninitialized: true, // Creates a session for every visitor, which is needed for the security check.
+    resave: true, // Changed to true to refresh session on each request
+    saveUninitialized: false, // Changed to false for better security
+    rolling: true, // Reset expiration on each request
     store: process.env.MONGO_URI
         ? MongoStore.create({
             mongoUrl: process.env.MONGO_URI,
-            collectionName: 'sessions'
+            collectionName: 'sessions',
+            touchAfter: 24 * 3600, // lazy session update
+            ttl: 7 * 24 * 60 * 60 // 7 days
         })
         : undefined,
     cookie: {
-        // Session expires after 1 week.
-        maxAge: 1000 * 60 * 60 * 24 * 7
-    }
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        secure: false, // Set to true in production with HTTPS
+        httpOnly: true, // Prevent XSS attacks
+        sameSite: 'lax' // CSRF protection
+    },
+    name: 'user.sid' // Unique session name for user
 }));
 
 // Initialize passport (no passport.session() required for our short flow)
 app.use(passport.initialize());
+
+// Session refresh middleware - prevents premature logout
+app.use((req, res, next) => {
+    if (req.session && req.session.userId) {
+        // Refresh the session on each request to prevent timeout
+        req.session.touch();
+    }
+    next();
+});
 
 // configure Google strategy (only if env vars are present)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL) {
@@ -65,6 +111,23 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
+// Register Handlebars helpers
+hbs.registerHelper('gte', function(a, b) {
+    return a >= b;
+});
+
+hbs.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+
+hbs.registerHelper('lt', function(a, b) {
+    return a < b;
+});
+
+hbs.registerHelper('lte', function(a, b) {
+    return a <= b;
+});
+
 // register partials directory for header/footer
 hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
@@ -74,9 +137,14 @@ app.use(async (req, res, next) => {
     res.locals.siteName = 'CivicConnect';
     res.locals.currentUser = null;
     res.locals.currentYear = new Date().getFullYear(); // provide year for footer
+    res.locals.userStats = {
+      reportsCount: 0,
+      contributionsCount: 0,
+      memberSince: 'N/A'
+    };
 
     if (req.session && req.session.userId) {
-      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId').lean();
+      const user = await User.findById(req.session.userId).select('firstName lastName email username googleId avatarUrl createdAt').lean();
       if (user) {
         res.locals.currentUser = {
           id: user._id,
@@ -84,8 +152,28 @@ app.use(async (req, res, next) => {
           lastName: user.lastName || '',
           email: user.email || '',
           username: user.username || '',
-          googleId: user.googleId || null
+          googleId: user.googleId || null,
+          avatarUrl: user.avatarUrl || ''
         };
+
+        // Calculate user stats for footer
+        try {
+          const Report = require('./models/report');
+          const Contribution = require('./models/contribution');
+          
+          const reportsCount = await Report.countDocuments({ user: user._id });
+          const contributionsCount = await Contribution.countDocuments({ user: user._id });
+          const memberSince = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+          
+          res.locals.userStats = {
+            reportsCount,
+            contributionsCount,
+            memberSince
+          };
+        } catch (statsErr) {
+          // If models don't exist or query fails, keep default stats
+          console.log('Could not load user stats:', statsErr.message);
+        }
       }
     }
     return next();
@@ -93,8 +181,30 @@ app.use(async (req, res, next) => {
     console.error('Failed to populate currentUser for views:', err);
     res.locals.currentUser = null;
     res.locals.currentYear = new Date().getFullYear();
+    res.locals.userStats = {
+      reportsCount: 0,
+      contributionsCount: 0,
+      memberSince: 'N/A'
+    };
     return next();
   }
+});
+
+// Session check endpoint
+app.get('/session-check', (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.status(401).json({ valid: false, message: 'No session' });
+    }
+    
+    User.findById(req.session.userId).then(user => {
+        if (user) {
+            req.session.touch(); // Refresh session
+            return res.json({ valid: true, message: 'Session valid' });
+        }
+        return res.status(403).json({ valid: false, message: 'User not found' });
+    }).catch(() => {
+        return res.status(500).json({ valid: false, message: 'Database error' });
+    });
 });
 
 // Use routes
@@ -104,14 +214,17 @@ app.use('/auth', signupRoutes);
 app.use('/auth', googleRoutes); // new
 app.use('/auth', logoutRoutes); // added
 app.use('/', dashboardRoutes);
+app.use('/', settingsRoutes);
+app.use('/', contributeRoutes);
+app.use('/api/geocoding', geocodingRoutes);
 
 // Add redirect so /login works
 app.get('/login', (req, res) => {
     return res.redirect('/auth/login');
 });
 
-// serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// serve uploaded files from common uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 //helper functions
 hbs.registerHelper('eq', function (a, b) {

@@ -69,7 +69,7 @@
     }
     .card{background:linear-gradient(180deg,#fff,#fbfdfe);border-radius:12px;padding:14px;border:1px solid rgba(7,16,35,0.04)}
     .btn{
-      display:inline-flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:800;cursor:pointer;
+      display:inline-flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:rgb(0, 0, 0);font-weight:800;cursor:pointer;
       box-shadow:0 10px 30px rgba(6,182,212,0.12)
     }
     .btn-ghost{background:transparent;border:1px solid rgba(7,16,35,0.06);color:#071023;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
@@ -172,7 +172,7 @@
         const tWords = (t.value||'').trim().split(/\s+/).filter(Boolean).length;
         if (tWords < 1 || tWords > 10){ e.preventDefault(); alert('Title must be 1–10 words'); t.focus(); return; }
         const d = countWords(desc.value || '');
-        if (d < 30 || d > 250){ e.preventDefault(); alert('Description must be 30–250 words'); desc.focus(); return; }
+        if (d < 30 || d > 250){ e.preventDefault(); showNotification('Description must be 30–250 words', 'error'); desc.focus(); return; }
       });
     })();
   </script>
