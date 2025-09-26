@@ -235,7 +235,7 @@ SOFTWARE.
 
 - 🐛 **Found a bug?** [Open an issue](https://github.com/VaishakSK/SIH-2025/issues)
 - 💡 **Have an idea?** [Start a discussion](https://github.com/VaishakSK/SIH-2025/discussions)
-- 📧 **Need help?** Contact us at [your-email@example.com]
+- 📧 **Need help?** Contact us at [civicsensesupport@example.com]
 
 ---
 
