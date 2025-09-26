@@ -197,7 +197,7 @@ We welcome contributions! Here's how to get started:
 |-----------|------|--------|
 | 🧑‍💻 **VAISHAK KOLHAR** | Lead Developer | [@VaishakSK](https://github.com/VaishakSK) |
 | 👨‍💻 **Avinash** | Backend Developer | [@avinashnayak16](https://github.com/avinashnayak16) |
-| 👨‍💻 **Veerraj Chitragar** | Full Stack Developer | [@Veerraj2713](https://github.com/Veerraj2713) |
+| 👨‍💻 **Veerraj Chitragar** | System Design/Developer | [@Veerraj2713](https://github.com/Veerraj2713) |
 
 ---
 
